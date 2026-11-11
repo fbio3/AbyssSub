@@ -1,0 +1,20 @@
+# Gradle / Android Studio
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# APKs gerados (publique pelo GitHub Releases)
+APK/
+*.apk
+*.aab
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

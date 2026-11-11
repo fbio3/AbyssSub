@@ -1,0 +1,10 @@
+plugins {
+    id 'com.android.application' version '8.13.0' apply false
+}
+
+// Os arquivos temporários do build ficam FORA do OneDrive (o OneDrive trava
+// essas pastas e o build falha). Local: %LOCALAPPDATA%\AbyssSub-build
+def outBase = new File(System.getenv('LOCALAPPDATA') ?: System.getProperty('java.io.tmpdir'), 'AbyssSub-build')
+allprojects {
+    layout.buildDirectory.set(new File(outBase, project.name))
+}

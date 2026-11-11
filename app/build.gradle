@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.fabio.mensalidades'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.fabio.mensalidades'
+        minSdk 24
+        targetSdk 34
+        versionCode 4
+        versionName '1.3'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Usa a chave de debug para o APK release já sair instalável.
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// Depois de gerar, copia o APK para a pasta "APK" do projeto.
+def apkDestino = rootProject.file('APK')
+def pastaBuild = layout.buildDirectory
+['Debug', 'Release'].each { variante ->
+    tasks.matching { it.name == "assemble${variante}" }.configureEach { t ->
+        t.doLast {
+            def origem = pastaBuild.dir("outputs/apk/${variante.toLowerCase()}").get().asFile
+            apkDestino.mkdirs()
+            origem.listFiles()?.findAll { it.name.endsWith('.apk') }?.each { f ->
+                java.nio.file.Files.copy(f.toPath(),
+                    new File(apkDestino, f.name.replace('app-', 'AbyssSub-')).toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
+    }
+}

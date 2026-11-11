@@ -1,0 +1,98 @@
+<p align="center">
+  <img src="docs/icon.png" width="112" alt="Ícone do AbyssSub">
+</p>
+
+<h1 align="center">AbyssSub</h1>
+
+<p align="center">
+  App Android para saber quanto você gasta por mês com assinaturas — e quanto sobra da sua renda.
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/inicio-dark.png" width="250" alt="Tela Início">
+  <img src="docs/screenshots/renda-dark.png" width="250" alt="Tela Renda">
+  <img src="docs/screenshots/historico-dark.png" width="250" alt="Tela Histórico">
+</p>
+
+## Recursos
+
+**Início**
+- Total gasto por mês, por ano e nos próximos 30 dias
+- Planos semanais, mensais, trimestrais, semestrais e anuais (tudo convertido para o valor mensal)
+- Promoções com duração em meses — o app volta ao preço normal sozinho quando ela acaba
+- Próximas cobranças com a parte mensal dos planos longos (ex.: `R$ 49,99 · 10/12`)
+- Gráfico por categoria e projeção dos próximos 12 meses (toque num mês para ver os detalhes)
+
+**Renda**
+- Várias fontes de renda (mensal, quinzenal, semanal ou anual)
+- Quanto sobra por mês, por dia e em 12 meses
+- Quanto da renda vai para assinaturas, com indicador (Saudável / Atenção / Alto)
+- Quantas horas de trabalho cada assinatura custa
+
+**Histórico**
+- Registro dos pagamentos automático ou manual (configurável)
+- Calendário com pagos, previstos, a confirmar e não pagos
+- Filtros de período: desde o início, este mês, 3 meses, 6 meses, este ano ou período personalizado
+- Resumo: maior gasto, mês mais caro, economia com promoções
+- Gráfico por mês, ranking por assinatura e extrato
+
+**Geral**
+- Tema claro, escuro ou automático (segue o celular)
+- Animações em toda a interface
+- Seus dados ficam **só no celular** — o app não usa internet nem pede permissões
+
+<details>
+<summary>Ver no modo claro</summary>
+<p align="center">
+  <img src="docs/screenshots/inicio-light.png" width="250" alt="Início (claro)">
+  <img src="docs/screenshots/renda-light.png" width="250" alt="Renda (claro)">
+  <img src="docs/screenshots/historico-light.png" width="250" alt="Histórico (claro)">
+</p>
+</details>
+
+## Baixar
+
+Baixe o `AbyssSub-debug.apk` mais recente na página de **[Releases](../../releases)**, abra no celular e permita
+"instalar apps desconhecidos" quando o Android pedir. Requer Android 7.0 ou superior.
+
+> Um APK gerado no seu computador e um gerado pelo GitHub são assinados com chaves diferentes.
+> Para trocar de um para o outro é preciso desinstalar o app antes (os dados salvos serão apagados).
+
+## Compilar
+
+**Android Studio**
+1. `File > Open` e selecione a pasta do projeto
+2. Aguarde o *Gradle sync*
+3. `Build > Generate App Bundles or APKs > Generate APKs`
+4. O APK é copiado para a pasta `APK/`
+
+**Linha de comando**
+```bash
+./gradlew assembleDebug        # Linux/macOS
+gradlew.bat assembleDebug      # Windows (ou dê dois cliques em gerar-apk.bat)
+```
+
+Requisitos: JDK 17+ e Android SDK (o Android Studio já instala os dois).
+
+**GitHub Actions** — todo push na `main` gera o APK automaticamente (aba *Actions > Artifacts*).
+Para publicar uma versão na página de Releases:
+```bash
+git tag v1.3
+git push origin v1.3
+```
+
+## Estrutura
+
+```
+app/src/main/
+├── assets/index.html          # toda a interface e a lógica do app
+├── java/.../MainActivity.java # abre a interface (WebView) e ajusta as barras do sistema ao tema
+├── res/                       # ícones, nome do app e temas claro/escuro
+└── AndroidManifest.xml
+```
+
+A interface pode ser testada direto no navegador do computador abrindo `app/src/main/assets/index.html`.
+
+## Licença
+
+[MIT](LICENSE)
