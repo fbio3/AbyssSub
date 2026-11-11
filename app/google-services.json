@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "965195067302",
+    "project_id": "abysssub-made-in-abyss",
+    "storage_bucket": "abysssub-made-in-abyss.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:965195067302:android:913cb6c1a442b52a92e967",
+        "android_client_info": {
+          "package_name": "com.abysssub.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "965195067302-uthmvkqabeegmhvmfugs3dl8jt0n3ffe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.abysssub.app",
+            "certificate_hash": "ba6a5b3bdedfb303a177e0e5f530ab6586c44986"
+          }
+        },
+        {
+          "client_id": "965195067302-lqhdj67l7ghbr2m61mr8h1645hceekjg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaiUcWVbrkotvfU6zfotsq1KuX-vR7bhw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "965195067302-lqhdj67l7ghbr2m61mr8h1645hceekjg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

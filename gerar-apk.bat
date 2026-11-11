@@ -8,7 +8,11 @@ if not exist local.properties (
     pause & exit /b 1
   )
 )
-if "%JAVA_HOME%"=="" if exist "%ProgramFiles%\Android\Android Studio\jbr" set "JAVA_HOME=%ProgramFiles%\Android\Android Studio\jbr"
+if not defined JAVA_HOME for %%P in (
+  "%ProgramFiles%\Android\Android Studio\jbr"
+  "%LOCALAPPDATA%\Programs\Android Studio\jbr"
+  "%ProgramFiles(x86)%\Android\Android Studio\jbr"
+) do if not defined JAVA_HOME if exist "%%~P\bin\java.exe" set "JAVA_HOME=%%~P"
 call gradlew.bat assembleRelease
 echo.
 echo APK gerado na pasta APK

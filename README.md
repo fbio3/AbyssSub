@@ -36,10 +36,16 @@
 - Resumo: maior gasto, mês mais caro, economia com promoções
 - Gráfico por mês, ranking por assinatura e extrato
 
+**Conta e nuvem**
+- Na primeira abertura: **Entrar com Google** ou **Continuar sem conta** (também em Configurações > Conta)
+- Com a conta Google, tudo é salvo no Firebase e volta sozinho em qualquer celular
+- Funciona sem internet e sincroniza quando a conexão voltar
+- Backup em texto (Configurações > Backup) para guardar ou passar para outro celular
+- Sem conta, os dados ficam só no celular
+
 **Geral**
 - Tema claro, escuro ou automático (segue o celular)
 - Animações em toda a interface
-- Seus dados ficam **só no celular** — o app não usa internet nem pede permissões
 
 <details>
 <summary>Ver no modo claro</summary>
@@ -55,8 +61,8 @@
 Baixe o `AbyssSub-debug.apk` mais recente na página de **[Releases](../../releases)**, abra no celular e permita
 "instalar apps desconhecidos" quando o Android pedir. Requer Android 7.0 ou superior.
 
-> Um APK gerado no seu computador e um gerado pelo GitHub são assinados com chaves diferentes.
-> Para trocar de um para o outro é preciso desinstalar o app antes (os dados salvos serão apagados).
+> Se o segredo `ABYSS_DEBUG_KEYSTORE` não estiver configurado, o APK do GitHub sai com outra assinatura:
+> aí é preciso desinstalar antes de trocar de um APK para o outro.
 
 ## Compilar
 
@@ -74,7 +80,13 @@ gradlew.bat assembleDebug      # Windows (ou dê dois cliques em gerar-apk.bat)
 
 Requisitos: JDK 17+ e Android SDK (o Android Studio já instala os dois).
 
+**Login com Google:** precisa de um projeto no Firebase e do arquivo `app/google-services.json`.
+Veja o passo a passo em **[CONFIGURAR-FIREBASE.md](CONFIGURAR-FIREBASE.md)**. Sem esse arquivo o app
+compila do mesmo jeito e funciona só no modo sem conta.
+
 **GitHub Actions** — todo push na `main` gera o APK automaticamente (aba *Actions > Artifacts*).
+Para o APK do GitHub ter a mesma assinatura do seu PC (necessário para o login), crie o segredo
+`ABYSS_DEBUG_KEYSTORE` com o `chave-github.bat` (detalhes no guia do Firebase).
 Para publicar uma versão na página de Releases:
 ```bash
 git tag v1.3
@@ -86,10 +98,12 @@ git push origin v1.3
 ```
 app/src/main/
 ├── assets/index.html          # toda a interface e a lógica do app
-├── java/.../MainActivity.java # abre a interface (WebView) e ajusta as barras do sistema ao tema
+├── java/.../MainActivity.java # abre a interface (WebView), login com Google e sincronização (Firebase)
 ├── res/                       # ícones, nome do app e temas claro/escuro
 └── AndroidManifest.xml
 ```
+
+`firestore.rules` tem as regras de segurança do banco (cada pessoa só acessa os próprios dados).
 
 A interface pode ser testada direto no navegador do computador abrindo `app/src/main/assets/index.html`.
 

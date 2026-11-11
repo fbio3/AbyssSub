@@ -23,9 +23,21 @@ jobs:
 
       - uses: android-actions/setup-android@v3
         with:
+          # o padrão da action instala o pacote "tools", que não existe mais
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
       - uses: gradle/actions/setup-gradle@v4
+
+      - name: Chave de assinatura (a mesma do seu PC)
+        env:
+          KEYSTORE_B64: ${{ secrets.ABYSS_DEBUG_KEYSTORE }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/abyss.keystore"
+            echo "ABYSS_KEYSTORE_FILE=$RUNNER_TEMP/abyss.keystore" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Segredo ABYSS_DEBUG_KEYSTORE não configurado: o APK sai com uma chave temporária e o login com Google não funciona nele."
+          fi
 
       - name: Compilar APK
         run: |
