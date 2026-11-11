@@ -1,6 +1,11 @@
 package com.abysssub.app;
 
-import android.app.Activity;
+import android.Manifest;
+import android.app.NotificationManager;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.provider.Settings;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.res.Configuration;
@@ -18,6 +23,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import androidx.annotation.NonNull;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
 import androidx.credentials.ClearCredentialStateRequest;
 import androidx.credentials.Credential;
 import androidx.credentials.CredentialManager;
@@ -28,10 +36,15 @@ import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.ClearCredentialException;
 import androidx.credentials.exceptions.GetCredentialCancellationException;
 import androidx.credentials.exceptions.GetCredentialException;
+import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseNetworkException;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -45,11 +58,13 @@ import com.google.firebase.firestore.Source;
 
 import org.json.JSONObject;
 
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
+    private static final int REQ_NOTIF = 77;
     private WebView web;
 
     // Firebase (fica desligado se o app for compilado sem o google-services.json)
@@ -132,6 +147,12 @@ public class MainActivity extends Activity {
 
     private static String q(String s) {
         return JSONObject.quote(s == null ? "" : s);
+    }
+
+    private static String errCode(Exception e) {
+        if (e instanceof FirebaseAuthException) return ((FirebaseAuthException) e).getErrorCode();
+        if (e instanceof FirebaseNetworkException) return "ERROR_NETWORK";
+        return e == null ? "ERROR_UNKNOWN" : String.valueOf(e.getMessage());
     }
 
     private void authError(String msg, boolean cancelled) {
@@ -238,6 +259,91 @@ public class MainActivity extends Activity {
             }
         }
 
+        // ------------------------------------------------ e-mail e senha
+        @JavascriptInterface
+        public void emailAuth(final String mode, final String email, final String password) {
+            if (!cloudOk) return;
+            runOnUiThread(() -> {
+                Task<AuthResult> t = "signup".equals(mode)
+                        ? auth.createUserWithEmailAndPassword(email, password)
+                        : auth.signInWithEmailAndPassword(email, password);
+                t.addOnCompleteListener(MainActivity.this, task -> {
+                    FirebaseUser u = auth.getCurrentUser();
+                    if (task.isSuccessful() && u != null) {
+                        js("onAuth", q(userJson(u)));
+                        startListener();
+                    } else {
+                        js("onEmailError", q(errCode(task.getException())));
+                    }
+                });
+            });
+        }
+
+        @JavascriptInterface
+        public void resetPassword(final String email) {
+            if (!cloudOk) return;
+            auth.sendPasswordResetEmail(email).addOnCompleteListener(task ->
+                    js("onResetSent", task.isSuccessful() + "," + q(task.isSuccessful() ? "" : errCode(task.getException()))));
+        }
+
+        // ------------------------------------------------ bloqueio (digital / bloqueio do celular)
+        @JavascriptInterface
+        public String lockAvailable(String mode) {
+            int r = BiometricManager.from(MainActivity.this).canAuthenticate(authenticators(mode));
+            if (r == BiometricManager.BIOMETRIC_SUCCESS) return "ok";
+            if (r == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) return "none";
+            return "nohw";
+        }
+
+        @JavascriptInterface
+        public void authenticate(final String mode) {
+            runOnUiThread(() -> startAuth(mode));
+        }
+
+        @JavascriptInterface
+        public String hashPin(String text) {
+            try {
+                byte[] d = MessageDigest.getInstance("SHA-256").digest(text.getBytes("UTF-8"));
+                StringBuilder sb = new StringBuilder();
+                for (byte b : d) sb.append(String.format("%02x", b));
+                return sb.toString();
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
+        // ------------------------------------------------ notificações
+        @JavascriptInterface
+        public String notifPermission() {
+            if (Build.VERSION.SDK_INT >= 33
+                    && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return "denied";
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            return nm != null && nm.areNotificationsEnabled() ? "granted" : "blocked";
+        }
+
+        @JavascriptInterface
+        public void requestNotifPermission() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 33
+                        && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF);
+                } else {
+                    js("onNotifPermission", q(notifPermission()));
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void openAppSettings() {
+            runOnUiThread(() -> startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", getPackageName(), null))));
+        }
+
+        @JavascriptInterface
+        public void setReminders(String json) {
+            Reminders.save(getApplicationContext(), json);
+        }
+
         @JavascriptInterface
         public boolean cloudAvailable() {
             return cloudOk;
@@ -305,6 +411,49 @@ public class MainActivity extends Activity {
         }
     }
 
+    // ---------------------------------------------------------------- bloqueio
+
+    private static int authenticators(String mode) {
+        return "bio".equals(mode)
+                ? BiometricManager.Authenticators.BIOMETRIC_STRONG
+                : BiometricManager.Authenticators.BIOMETRIC_WEAK | BiometricManager.Authenticators.DEVICE_CREDENTIAL;
+    }
+
+    private void startAuth(String mode) {
+        boolean bio = "bio".equals(mode);
+        BiometricPrompt.PromptInfo.Builder info = new BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Desbloquear AbyssSub")
+                .setSubtitle(bio ? "Use sua digital" : "Use o bloqueio do celular")
+                .setAllowedAuthenticators(authenticators(mode));
+        if (bio) info.setNegativeButtonText("Cancelar");
+        BiometricPrompt prompt = new BiometricPrompt(this, mainExec, new BiometricPrompt.AuthenticationCallback() {
+            @Override
+            public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
+                js("onUnlock", "true,\"\",0");
+            }
+
+            @Override
+            public void onAuthenticationError(int code, @NonNull CharSequence msg) {
+                js("onUnlock", "false," + q(msg.toString()) + "," + code);
+            }
+        });
+        try {
+            prompt.authenticate(info.build());
+        } catch (Exception e) {
+            js("onUnlock", "false," + q(e.getMessage()) + ",-1");
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == REQ_NOTIF) {
+            boolean ok = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+            js("onNotifPermission", q(ok ? "granted" : "denied"));
+        }
+    }
+
     // ---------------------------------------------------------------- tema
 
     private boolean isDark() {
@@ -355,7 +504,12 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         // Se algum painel estiver aberto, o botão voltar só fecha ele.
         web.evaluateJavascript("window.handleBack ? window.handleBack() : false", value -> {
-            if (!"true".equals(value)) MainActivity.super.onBackPressed();
+            if (!"true".equals(value)) defaultBack();
         });
+    }
+
+    @SuppressWarnings("deprecation")
+    private void defaultBack() {
+        super.onBackPressed();
     }
 }

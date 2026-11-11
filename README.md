@@ -37,11 +37,15 @@
 - Gráfico por mês, ranking por assinatura e extrato
 
 **Conta e nuvem**
-- Na primeira abertura: **Entrar com Google** ou **Continuar sem conta** (também em Configurações > Conta)
+- Na primeira abertura: **Entrar com Google**, **Entrar com e-mail** ou **Continuar sem conta** (também em Configurações > Conta)
 - Com a conta Google, tudo é salvo no Firebase e volta sozinho em qualquer celular
 - Funciona sem internet e sincroniza quando a conexão voltar
 - Backup em texto (Configurações > Backup) para guardar ou passar para outro celular
 - Sem conta, os dados ficam só no celular
+
+**Lembretes e segurança**
+- Notificação antes de cada cobrança (no dia, 1, 2, 3 ou 7 dias antes, no horário que você escolher)
+- Bloqueio ao abrir: senha do app, bloqueio do celular ou digital
 
 **Geral**
 - Tema claro, escuro ou automático (segue o celular)

@@ -10,11 +10,13 @@ o app funciona normalmente no modo "sem conta".
 3. Nome: `AbyssSub` → continuar.
 4. Google Analytics: pode **desativar** (o app não usa) → **Criar projeto**.
 
-## 2. Ligar o login com Google
+## 2. Ligar o login com Google e com e-mail
 
 1. No menu da esquerda: **Criação > Authentication** (*Build > Authentication*) → **Vamos começar**.
 2. Aba **Método de login** (*Sign-in method*) → **Google** → ative a chave **Ativar**.
 3. Em **E-mail de suporte do projeto**, escolha o seu e-mail → **Salvar**.
+4. Ainda em **Método de login**: **Adicionar novo provedor** → **E-mail/senha** → ative só a
+   primeira chave (**E-mail/senha**; a de "link por e-mail" pode ficar desligada) → **Salvar**.
 
 ## 3. Criar o banco de dados
 
