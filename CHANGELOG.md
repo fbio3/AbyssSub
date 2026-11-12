@@ -1,5 +1,39 @@
 # Histórico de mudanças do AbyssSub
 
+## v2.0
+- Novo: nova aba Início com todos os seus gastos do mês, não só as assinaturas
+- Mudança: a antiga aba Início agora se chama Assinaturas
+- Novo: barra de baixo com 4 abas: Início, Assinaturas, Renda e Histórico
+- Novo: as compras entram sozinhas a partir dos extratos importados e das notificações do banco
+- Novo: botão + na aba Início para adicionar uma compra à mão
+- Novo: categoria automática para cada compra (mercado, restaurantes, transporte, saúde, compras, contas, Pix e mais)
+- Novo: nomes limpos para lojas conhecidas (ex.: "UBER *TRIP" vira "Uber")
+- Novo: navegar entre os meses no topo da aba Início
+- Novo: comparação com o mês passado e média de gasto por dia
+- Novo: gráfico de gastos por categoria e dos últimos 6 meses
+- Novo: destaques do mês: maior gasto, onde mais gastou, dia da semana que mais gasta, categoria principal e dias sem gastar
+- Novo: ranking "Onde você mais gasta"
+- Novo: lista de gastos por dia, com busca e filtro por categoria
+- Novo: editar nome e categoria de qualquer compra, ou remover com opção de desfazer
+- Novo: "É uma assinatura: cadastrar" transforma uma compra em assinatura
+- Novo: Histórico agora mostra o total gasto com tudo, separando assinaturas e compras
+- Novo: cobranças de assinaturas que aparecem no extrato antes de você usar o app passam a contar no Histórico
+- Novo: estatísticas novas no Histórico: total em assinaturas, total em compras, maior compra e cobranças achadas no extrato
+- Novo: filtro do extrato do Histórico por Tudo, Assinaturas ou Compras
+- Novo: calendário do Histórico mostra as compras também
+- Novo: tocar num lançamento do Histórico abre opções: marcar como pago/não pago, editar ou remover do histórico
+- Novo: remover um pagamento de assinatura do histórico, com opção de desfazer
+- Novo: na aba Renda, a referência de gasto com assinaturas pode ser alterada (5%, 10%, 15%, 20%, 30% ou outro valor)
+- Novo: na aba Renda, "Compras este mês" e "Sobra real do mês" (renda menos assinaturas menos compras)
+- Melhoria: compras adicionadas à mão, edições e a referência da renda também são salvas na conta
+- Melhoria: a mesma cobrança vista no extrato e na notificação do banco conta uma vez só
+- Melhoria: um pagamento de assinatura e a mesma cobrança no extrato contam uma vez só
+- Correção: depois de importar um extrato, as telas não se atualizavam até trocar de aba
+- Correção: um pagamento removido ou marcado como não pago não volta mais pelo extrato
+- Correção: tocar num pagamento do histórico não troca mais o status sem querer (agora abre um menu)
+- Correção: os totais de cada mês no extrato do Histórico agora somam tudo o que foi pago
+- Melhoria: limpeza de código antigo que não era mais usado
+
 ## v1.9
 - Novo: importar vários extratos de uma vez (por exemplo, um arquivo para cada mês)
 - Novo: Configurações mostra os meses de extrato já salvos, com os meses faltando em tracejado

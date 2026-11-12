@@ -16,7 +16,13 @@
 
 ## Recursos
 
-**Início**
+**Início (gastos)**
+- Todos os gastos do mês: compras e assinaturas, com navegação entre os meses
+- Compras importadas sozinhas dos extratos e das notificações do banco, ou adicionadas à mão
+- Categoria automática, gráficos por categoria e dos últimos 6 meses, destaques e ranking de onde mais gasta
+- Lista por dia com busca e filtro por categoria
+
+**Assinaturas**
 - Total gasto por mês, por ano e nos próximos 30 dias
 - Planos semanais, mensais, trimestrais, semestrais e anuais (tudo convertido para o valor mensal)
 - Promoções com duração em meses — o app volta ao preço normal sozinho quando ela acaba
@@ -30,6 +36,8 @@
 - Quantas horas de trabalho cada assinatura custa
 
 **Histórico**
+- Total gasto com tudo, separando assinaturas e compras (inclusive cobranças antigas achadas no extrato)
+- Remover pagamentos do histórico ou marcar como não pagos
 - Registro dos pagamentos automático ou manual (configurável)
 - Calendário com pagos, previstos, a confirmar e não pagos
 - Filtros de período: desde o início, este mês, 3 meses, 6 meses, este ano ou período personalizado
