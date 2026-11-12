@@ -26,6 +26,7 @@ import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
+import androidx.core.content.FileProvider;
 import androidx.credentials.ClearCredentialStateRequest;
 import androidx.credentials.Credential;
 import androidx.credentials.CredentialManager;
@@ -56,7 +57,17 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Source;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -65,6 +76,7 @@ import java.util.concurrent.Executor;
 
 public class MainActivity extends FragmentActivity {
     private static final int REQ_NOTIF = 77;
+    private volatile boolean pendingInstall = false;
     private WebView web;
 
     // Firebase (fica desligado se o app for compilado sem o google-services.json)
@@ -344,6 +356,117 @@ public class MainActivity extends FragmentActivity {
             Reminders.save(getApplicationContext(), json);
         }
 
+        // ------------------------------------------------ atualização pelo GitHub
+        @JavascriptInterface
+        public String appVersion() {
+            try {
+                return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
+        @JavascriptInterface
+        public void checkUpdate(final String repo) {
+            new Thread(() -> {
+                HttpURLConnection c = null;
+                try {
+                    c = (HttpURLConnection) new URL("https://api.github.com/repos/" + repo + "/releases/latest").openConnection();
+                    c.setRequestProperty("Accept", "application/vnd.github+json");
+                    c.setRequestProperty("User-Agent", "AbyssSub-app");
+                    c.setConnectTimeout(10000);
+                    c.setReadTimeout(15000);
+                    int code = c.getResponseCode();
+                    if (code != 200) {
+                        js("onUpdateInfo", "null," + code);
+                        return;
+                    }
+                    JSONObject r = new JSONObject(readAll(c.getInputStream()));
+                    JSONObject out = new JSONObject();
+                    out.put("tag", r.optString("tag_name"));
+                    out.put("name", r.optString("name"));
+                    out.put("notes", r.optString("body"));
+                    out.put("page", r.optString("html_url"));
+                    JSONArray assets = r.optJSONArray("assets");
+                    if (assets != null) {
+                        for (int i = 0; i < assets.length(); i++) {
+                            JSONObject a = assets.getJSONObject(i);
+                            String n = a.optString("name");
+                            if (n.toLowerCase().endsWith(".apk")) {
+                                out.put("apk", a.optString("browser_download_url"));
+                                out.put("size", a.optLong("size"));
+                                if (n.equals("AbyssSub.apk")) break;
+                            }
+                        }
+                    }
+                    js("onUpdateInfo", q(out.toString()) + ",200");
+                } catch (Exception e) {
+                    js("onUpdateInfo", "null,0");
+                } finally {
+                    if (c != null) c.disconnect();
+                }
+            }).start();
+        }
+
+        @JavascriptInterface
+        public void downloadUpdate(final String url) {
+            new Thread(() -> {
+                File dest = updateFile();
+                File tmp = new File(dest.getPath() + ".part");
+                HttpURLConnection c = null;
+                try {
+                    c = (HttpURLConnection) new URL(url).openConnection();
+                    c.setRequestProperty("User-Agent", "AbyssSub-app");
+                    c.setInstanceFollowRedirects(true);
+                    c.setConnectTimeout(15000);
+                    c.setReadTimeout(30000);
+                    int code = c.getResponseCode();
+                    if (code != 200) throw new IOException("HTTP " + code);
+                    long total = c.getContentLengthLong(), done = 0;
+                    int last = -1;
+                    try (InputStream in = c.getInputStream(); OutputStream out = new FileOutputStream(tmp)) {
+                        byte[] buf = new byte[65536];
+                        int n;
+                        while ((n = in.read(buf)) > 0) {
+                            out.write(buf, 0, n);
+                            done += n;
+                            if (total > 0) {
+                                int p = (int) (done * 100 / total);
+                                if (p != last) {
+                                    last = p;
+                                    js("onUpdateProgress", String.valueOf(p));
+                                }
+                            }
+                        }
+                    }
+                    if (dest.exists() && !dest.delete()) throw new IOException("não foi possível substituir o arquivo");
+                    if (!tmp.renameTo(dest)) throw new IOException("não foi possível salvar o arquivo");
+                    js("onUpdateProgress", "100");
+                    runOnUiThread(MainActivity.this::installUpdate);
+                } catch (Exception e) {
+                    //noinspection ResultOfMethodCallIgnored
+                    tmp.delete();
+                    js("onUpdateError", q(e.getMessage()));
+                } finally {
+                    if (c != null) c.disconnect();
+                }
+            }).start();
+        }
+
+        @JavascriptInterface
+        public void installDownloaded() {
+            runOnUiThread(MainActivity.this::installUpdate);
+        }
+
+        @JavascriptInterface
+        public void openUrl(final String url) {
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                } catch (Exception ignored) { }
+            });
+        }
+
         @JavascriptInterface
         public boolean cloudAvailable() {
             return cloudOk;
@@ -408,6 +531,61 @@ public class MainActivity extends FragmentActivity {
             userDoc(u).get(Source.SERVER)
                     .addOnSuccessListener(MainActivity.this::deliver)
                     .addOnFailureListener(e -> js("onCloudError", q(e.getMessage())));
+        }
+    }
+
+    // ---------------------------------------------------------------- atualização
+
+    private static String readAll(InputStream in) throws IOException {
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
+        byte[] buf = new byte[16384];
+        int n;
+        while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
+        in.close();
+        return bo.toString("UTF-8");
+    }
+
+    private File updateFile() {
+        File dir = new File(getCacheDir(), "updates");
+        //noinspection ResultOfMethodCallIgnored
+        dir.mkdirs();
+        return new File(dir, "AbyssSub.apk");
+    }
+
+    /** Abre o instalador do Android com o APK baixado (pede a permissão na primeira vez). */
+    private void installUpdate() {
+        File f = updateFile();
+        if (!f.exists()) {
+            js("onUpdateError", q("arquivo da atualização não encontrado"));
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+            pendingInstall = true;
+            js("onUpdateNeedPermission", "");
+            try {
+                startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName())));
+            } catch (Exception ignored) { }
+            return;
+        }
+        pendingInstall = false;
+        try {
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".files", f);
+            Intent i = new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+            js("onUpdateInstalling", "");
+        } catch (Exception e) {
+            js("onUpdateError", q(e.getMessage()));
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Voltou da tela "Instalar apps desconhecidos": se a permissão foi dada, continua a instalação.
+        if (pendingInstall && (Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls())) {
+            installUpdate();
         }
     }
 

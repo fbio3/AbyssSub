@@ -50,6 +50,7 @@
 **Geral**
 - Tema claro, escuro ou automático (segue o celular)
 - Animações em toda a interface
+- Avisa quando sai uma versão nova no GitHub e atualiza direto pelo app (baixa e abre o instalador)
 
 <details>
 <summary>Ver no modo claro</summary>
@@ -93,6 +94,8 @@ Para o APK do GitHub ter a mesma assinatura do seu PC (necessário para o login)
 `ABYSS_DEBUG_KEYSTORE` com o `chave-github.bat` (detalhes no guia do Firebase).
 Para publicar uma versão: no site, **Releases > Draft a new release**, crie a tag (ex.: `v1.6.1`) e publique.
 O workflow roda sozinho e anexa o `AbyssSub.apk` na Release em alguns minutos.
+O texto que você escrever na descrição da Release aparece no aviso de atualização dentro do app.
+Use tags no formato `v1.7`, `v1.7.1`… e aumente o `versionName`/`versionCode` em `app/build.gradle` antes.
 
 ## Estrutura
 
