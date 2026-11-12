@@ -1,5 +1,10 @@
 # Histórico de mudanças do AbyssSub
 
+## v2.2.1
+- Correção: transformar uma compra em assinatura não duplica mais o gasto; a própria compra vira o pagamento da nova assinatura
+- A opção no menu da compra agora se chama "É uma assinatura: transformar em assinatura" e já preenche serviço, categoria e próxima cobrança
+- Roblox Premium agora aparece como Roblox Plus na lista de serviços e reconhece cobranças "Rblx Plus"
+
 ## v2.2
 - Correção: notificações de pagamento sem nome de loja não aparecem mais com a data como nome (ex.: "12/11/2026"); agora mostram "Pagamento (Nubank)", "Pix enviado" etc.
 - Correção: notificações de pagamento da fatura do cartão não contam mais como gasto

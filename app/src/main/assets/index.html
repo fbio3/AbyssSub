@@ -1953,7 +1953,7 @@ function money(s){ s=String(s||"").trim().replace(/\s|R\$/g,""); if(s.indexOf(",
 function moneyStr(v){ return v.toFixed(2).replace(".",","); }
 function curMonth(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
 function setPromoOpen(on){ $("promoWrap").classList.toggle("show",on); }
-var formSvc=null, formSugKey=null, formIcon=null;
+var formSvc=null, formSugKey=null, formIcon=null, formFromBuy=null;
 function renderFormAvatar(){
   var name=$("fName").value.trim()||"?", svc=formSvc||matchService(name);
   $("fAvatar").innerHTML=subAvatar({icon:formIcon,svc:svc,name:name,cat:$("fCat").value});
@@ -2004,7 +2004,7 @@ $("photoFile").addEventListener("change",function(){
   r.readAsDataURL(f);
 });
 function openForm(s,pre){
-  editing=s||null; delArmed=false; formSugKey=pre&&pre.key||null;
+  editing=s||null; delArmed=false; formSugKey=pre&&pre.key||null; formFromBuy=pre&&pre.fromBuy||null;
   $("formTitle").textContent=s?"Editar assinatura":pre?"Confirmar assinatura":"Nova assinatura";
   $("fName").value=s?s.name:""; $("fPrice").value=s?moneyStr(s.price):"";
   $("fCycle").value=s?s.cycle:"mensal"; $("fCat").value=s?s.cat:"streaming";
@@ -2066,9 +2066,13 @@ $("form").addEventListener("submit",function(e){
   var aka=[]; $("fAka").value.split(/[,;]/).forEach(function(x){ x=x.trim().slice(0,40); if(x&&normKey(x)!==normKey(name)&&!aka.some(function(y){ return normKey(y)===normKey(x); })) aka.push(x); });
   /* mudou de nome: o nome antigo continua valendo para achar as cobranças */
   if(editing&&normKey(editing.name)!==normKey(name)&&!aka.some(function(y){ return normKey(y)===normKey(editing.name); })) aka.push(editing.name);
+  if(formFromBuy&&!editing){ var fb=formFromBuy, base=fb.joined||fb.name;
+    [base,fb.name].forEach(function(x){ if(x&&!(normKey(x)===normKey(name)&&normKey(name).length>=4)&&!aka.some(function(y){ return normKey(y)===normKey(x); })) aka.push(x); });
+    var fbs=buyStore(); if(fbs.cat[fb.id]&&fbs.cat[fb.id]!=="__sub"){ delete fbs.cat[fb.id]; saveBuyStore(fbs); } }
   var data={name:name,price:price,cycle:$("fCycle").value,cat:$("fCat").value,next:next,promo:promo,svc:formSvc||(editing&&editing.svc)||matchService(name)||null,icon:formIcon||undefined,aka:aka.length?aka:undefined};
   if(formSugKey){ markSugDone(formSugKey); formSugKey=null; }
-  var msg=editing?"Alterações salvas":"Assinatura adicionada";
+  var msg=editing?"Alterações salvas":formFromBuy?"Agora é uma assinatura (essa compra virou o pagamento dela)":"Assinatura adicionada";
+  if(formFromBuy) _buysSig=""; formFromBuy=null;
   if(editing){ for(var k in data) editing[k]=data[k]; if(!data.aka) delete editing.aka; newId=editing.id; }
   else { data.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6); data.createdAt=fmtISO(today()); subs.push(data); newId=data.id; }
   save(); closeForm();
@@ -2637,7 +2641,7 @@ $("lockSeg").addEventListener("click",function(e){
 });
 
 /* ================= ATUALIZAÇÕES (GitHub Releases) ================= */
-var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="2.2", UPD_EVERY=6*3600*1000;
+var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="2.2.1", UPD_EVERY=6*3600*1000;
 var updState="", updManual=false, updBusy=false;
 function appVersion(){ try{ var v=BR&&BR.appVersion?BR.appVersion():""; if(v) return v; }catch(e){} return APP_VERSION_FALLBACK; }
 function verParts(v){ return String(v||"").replace(/^[^0-9]*/,"").split(/[^0-9]+/).filter(function(x){return x!=="";}).map(Number); }
@@ -2775,7 +2779,7 @@ var CATALOG=[
   ["nintendo","Nintendo Switch Online","jogos","anual","#e60012",["NINTENDO"]],
   ["eaplay","EA Play","jogos","mensal","#ff4747",["EA PLAY","ELECTRONIC ARTS"]],
   ["ubisoft","Ubisoft+","jogos","mensal","#0070ff",["UBISOFT"]],
-  ["robloxprem","Roblox Premium","jogos","mensal","#393b3d",["ROBLOX PREMIUM","RBLX PREMIUM"]],
+  ["robloxprem","Roblox Plus","jogos","mensal","#393b3d",["RBLX PLUS","ROBLOX PLUS","RBLXPLUS","ROBLOX PREMIUM","RBLX PREMIUM"]],
   ["fortnitecrew","Fortnite Crew","jogos","mensal","#6a32a8",["FORTNITE CREW"]],
   ["geforcenow","GeForce NOW","jogos","mensal","#76b900",["GEFORCE NOW","GEFORCENOW","NVIDIA"]],
   ["applearcade","Apple Arcade","jogos","mensal","#ff2d55",["APPLE ARCADE"]],
@@ -3362,7 +3366,7 @@ function saveBuyStore(b){ _buysSig=""; lsSet(BUYKEY,b); }
 function notifRaw(){ var raw=[]; try{ if(BR&&BR.getPurchases) raw=JSON.parse(BR.getPurchases()||"[]"); }catch(e){} return raw; }
 function subForText(t){
   if(!t) return null; var svc=matchService(t), n=normTxt(t);
-  for(var a=0;a<subs.length;a++){ var sa=subs[a]; if(sa.aka&&sa.aka.some(function(x){ var an=normKey(x); return an.length>=3&&n.indexOf(" "+an+" ")>=0; })) return sa; }
+  for(var a=0;a<subs.length;a++){ var sa=subs[a]; if(sa.aka&&sa.aka.some(function(x){ var an=normKey(x); return an.length>=2&&n.indexOf(" "+an+" ")>=0; })) return sa; }
   for(var i=0;i<subs.length;i++){
     var s=subs[i], ss=s.svc||matchService(s.name);
     if(svc){ if(ss===svc) return s; continue; }
@@ -3490,7 +3494,8 @@ function evActions(ev){
   if(ev.kind==="buy") a2.push({label:"É o mesmo lugar ou assinatura de outro: juntar",fn:function(){ openJoin({mode:"buy",b:b}); }});
   if(b.joined) a2.push({label:"Separar de "+b.name+" (voltar a "+b.joined+")",fn:function(){ unjoinBuy(b); }});
   if(b.src!=="manual") a2.push({label:"Não é um gasto (ignorar sempre)",fn:function(){ ignoreMerchant(b); }});
-  if(ev.kind==="buy") a2.push({label:"É uma assinatura: cadastrar",fn:function(){ openForm(null,{key:null,name:b.name,price:b.v,cycle:"mensal",cat:"outros",svc:matchService(b.desc),next:fmtISO(nextFrom(parseDate(b.d),"mensal"))}); }});
+  if(ev.kind==="buy") a2.push({label:"É uma assinatura: transformar em assinatura",fn:function(){ var sv=matchService(b.name)||matchService(b.desc);
+    openForm(null,{key:null,name:sv?CAT_BY_ID[sv][1]:b.name,price:b.v,cycle:sv?CAT_BY_ID[sv][3]:"mensal",cat:sv?CAT_BY_ID[sv][2]:"outros",svc:sv,next:fmtISO(nextFrom(parseDate(b.d),sv?CAT_BY_ID[sv][3]:"mensal")),fromBuy:b}); }});
   else a2.push({label:"Não é dessa assinatura",fn:function(){ var bs=buyStore(); bs.cat[b.id]=autoCat(b.desc)==="digital"?"digital":autoCat(b.desc); saveBuyStore(bs); renderAll(); toast("Agora conta como compra"); }});
   a2.push({label:"Remover",cls:"danger wide",fn:function(){ removeBuy(b); }});
   openActions(title,sub+(b.src!=="manual"?" · "+b.src:""),a2);
