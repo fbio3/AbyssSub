@@ -18,6 +18,7 @@ import android.os.Looper;
 import android.view.View;
 import android.view.Window;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -26,6 +27,7 @@ import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
 import androidx.credentials.ClearCredentialStateRequest;
 import androidx.credentials.Credential;
@@ -77,6 +79,8 @@ import java.util.concurrent.Executor;
 public class MainActivity extends FragmentActivity {
     private static final int REQ_NOTIF = 77;
     private volatile boolean pendingInstall = false;
+    private static final int REQ_FILE = 78;
+    private ValueCallback<Uri[]> fileCallback;
     private WebView web;
 
     // Firebase (fica desligado se o app for compilado sem o google-services.json)
@@ -106,7 +110,22 @@ public class MainActivity extends FragmentActivity {
                 if (cloudOk && auth.getCurrentUser() != null) startListener();
             }
         });
-        web.setWebChromeClient(new WebChromeClient());
+        web.setWebChromeClient(new WebChromeClient() {
+            // Permite o <input type="file"> da página (importar extrato do banco)
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+                if (fileCallback != null) fileCallback.onReceiveValue(null);
+                fileCallback = callback;
+                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
+                try {
+                    startActivityForResult(i, REQ_FILE);
+                    return true;
+                } catch (Exception e) {
+                    fileCallback = null;
+                    return false;
+                }
+            }
+        });
         web.addJavascriptInterface(new Bridge(), "AndroidBridge");
         setContentView(web);
         applySystemBars(isDark());
@@ -467,6 +486,38 @@ public class MainActivity extends FragmentActivity {
             });
         }
 
+        // ------------------------------------------------ detectar assinaturas
+        @JavascriptInterface
+        public boolean detectAccess() {
+            return NotificationManagerCompat.getEnabledListenerPackages(MainActivity.this).contains(getPackageName());
+        }
+
+        @JavascriptInterface
+        public void openDetectSettings() {
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+                } catch (Exception e) {
+                    startActivity(new Intent(Settings.ACTION_SETTINGS));
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public String getPurchases() {
+            return PurchaseListener.load(MainActivity.this).toString();
+        }
+
+        @JavascriptInterface
+        public void clearPurchases() {
+            PurchaseListener.clear(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public int sdkInt() {
+            return Build.VERSION.SDK_INT;
+        }
+
         @JavascriptInterface
         public boolean cloudAvailable() {
             return cloudOk;
@@ -619,6 +670,16 @@ public class MainActivity extends FragmentActivity {
             prompt.authenticate(info.build());
         } catch (Exception e) {
             js("onUnlock", "false," + q(e.getMessage()) + ",-1");
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_FILE && fileCallback != null) {
+            fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
+            fileCallback = null;
         }
     }
 

@@ -560,6 +560,55 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
 .upd-prog div{height:100%;width:0;background:linear-gradient(90deg,var(--brand-2),var(--gold));border-radius:9px;transition:width .25s ease}
 .upd-msg{font-size:13px;color:var(--muted);min-height:18px;margin-bottom:12px}
 .upd-msg.bad{color:var(--bad)}
+
+/* ---------- v1.8: detectar assinaturas ---------- */
+.pickbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1px dashed var(--brand-2);background:transparent;
+  color:var(--text);border-radius:14px;padding:12px;font-weight:700;cursor:pointer;margin:-4px 0 14px;transition:background .2s,transform .15s var(--ease)}
+.pickbtn:active{transform:scale(.98);background:var(--chip)}
+.pickbtn svg{width:18px;height:18px}
+.pickbtn[hidden]{display:none}
+.svc-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);margin:-8px 0 12px}
+.svc-chip[hidden]{display:none}
+.svc-chip button{border:0;background:none;color:var(--brand-2);font-weight:800;cursor:pointer;padding:0}
+.cat-search{position:sticky;top:-8px;background:var(--card);padding:4px 0 10px;z-index:1}
+.cat-search input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--field);outline:none;font-size:15px;color:var(--text)}
+.cat-group{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:12px 0 4px}
+.cat-item{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:9px 4px;border-radius:12px;cursor:pointer;text-align:left;color:var(--text);
+  transition:background .15s}
+.cat-item:active{background:var(--chip)}
+.cat-item .avatar{width:36px;height:36px;flex:0 0 36px;border-radius:10px;font-size:15px}
+.cat-item b{font-size:15px;font-weight:600}
+.sug-banner{display:flex;align-items:center;gap:12px;border-radius:16px;padding:12px 14px;margin-bottom:14px;cursor:pointer;
+  background:linear-gradient(120deg,var(--promo-bg),var(--chip));border:1px solid var(--promo-line);animation:fadeUp .4s var(--ease) both}
+.sug-banner svg{width:22px;height:22px;color:var(--gold);flex:0 0 22px}
+.sug-banner b{flex:1;font-size:14px}
+.sug-banner span{font-weight:800;font-size:13px;color:var(--promo-ink)}
+.sug{padding:12px 0;border-top:1px solid var(--line)}
+.sug:first-child{border-top:0}
+.sug.out{transition:opacity .25s,transform .3s var(--ease);opacity:0;transform:translateX(40px)}
+.sug .top{display:flex;align-items:center;gap:12px}
+.sug .top .avatar{width:40px;height:40px}
+.sug .info{flex:1;min-width:0}
+.sug .info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sug .info span{display:block;font-size:12px;color:var(--muted)}
+.sug .ev{font-size:12px;color:var(--muted);margin:6px 0 0 52px;line-height:1.4}
+.sug .acts{display:flex;gap:8px;margin:10px 0 0 52px}
+.sug .acts button{flex:1;border:0;border-radius:12px;padding:10px;font-weight:800;font-size:13px;cursor:pointer;transition:transform .15s var(--ease)}
+.sug .acts button:active{transform:scale(.95)}
+.sug .acts .yes{background:var(--gold);color:var(--gold-ink)}
+.sug .acts .no{background:var(--chip);color:var(--text)}
+.det-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.det-row span{font-size:14px;font-weight:600}
+.det-row small{display:block;font-size:12px;color:var(--muted);font-weight:500}
+.det-row .btn{flex:0 0 auto;padding:10px 14px;font-size:13px}
+.st-on{color:#1f9d61}
+:root[data-theme="dark"] .st-on{color:#7fd6a8}
+.det-help{font-size:12px;line-height:1.45;color:var(--muted);background:var(--chip);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.det-help button{border:0;background:none;color:var(--brand-2);font-weight:800;padding:0;cursor:pointer;text-decoration:underline}
+:root[data-theme="dark"] .det-help button{color:var(--gold)}
+.det-acts{display:flex;flex-direction:column;gap:8px}
+.det-acts .btn{width:100%}
+.det-note{font-size:12px;color:var(--muted);margin-top:10px}
 </style>
 </head>
 <body class="boot">
@@ -593,6 +642,7 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
 </header>
 <main>
   <div id="pendBanner"></div>
+  <div id="sugBanner"></div>
   <section class="card" style="--i:0">
     <h2>Próximas cobranças <small>30 dias · valor por mês</small></h2>
     <div id="dueList"></div>
@@ -732,6 +782,8 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
   <form class="sheet" id="form" autocomplete="off">
     <div class="grab"></div>
     <h3 id="formTitle">Nova assinatura</h3>
+    <button type="button" class="pickbtn" id="pickSvc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2" fill="currentColor"/><circle cx="3.5" cy="12" r="1.2" fill="currentColor"/><circle cx="3.5" cy="18" r="1.2" fill="currentColor"/></svg><span>Escolher da lista de serviços</span></button>
+    <div class="svc-chip" id="svcChip" hidden></div>
     <div class="field"><label for="fName">Nome</label><input id="fName" placeholder="Ex.: Netflix" maxlength="40"></div>
     <div class="two">
       <div class="field"><label for="fPrice">Valor (R$)</label><input id="fPrice" inputmode="decimal" placeholder="0,00"></div>
@@ -876,6 +928,29 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
   </div>
 </div>
 
+<!-- catálogo de serviços -->
+<div class="overlay top" id="catSheet">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3>Escolher serviço</h3>
+    <div class="cat-search"><input id="catQ" type="search" placeholder="Buscar (ex.: Netflix, academia, celular)" autocomplete="off"></div>
+    <div id="catList"></div>
+    <div class="actions" style="margin-top:12px"><button type="button" class="btn ghost" id="catClose">Fechar</button></div>
+  </div>
+</div>
+
+<!-- assinaturas encontradas -->
+<div class="overlay top" id="sugSheet">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3>Assinaturas encontradas</h3>
+    <p style="color:var(--muted);font-size:14px;margin:-6px 0 12px">Confira e toque em Adicionar. Nada é cadastrado sem você confirmar.</p>
+    <div id="sugList"></div>
+    <div class="actions" style="margin-top:12px"><button type="button" class="btn ghost" id="sugClose">Fechar</button></div>
+  </div>
+</div>
+<input type="file" id="stmtFile" accept=".ofx,.csv,.txt,text/csv,text/plain,application/x-ofx,application/vnd.ms-excel,*/*" hidden>
+
 <!-- configurações -->
 <div class="overlay" id="settings">
   <div class="sheet">
@@ -938,6 +1013,11 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
       <h4>Horas trabalhadas por mês</h4>
       <p>Usado na aba Renda para calcular quanto tempo de trabalho cada assinatura custa. 220 h ≈ 44 h por semana.</p>
       <input class="input-inline" id="hoursIn" type="number" inputmode="numeric" min="1" max="744" step="1">
+    </div>
+    <div class="set-group">
+      <h4>Detectar assinaturas</h4>
+      <p>Encontra as assinaturas que você já paga e sugere para você confirmar.</p>
+      <div id="detBox"></div>
     </div>
     <div class="set-group">
       <h4>Backup</h4>
@@ -1152,6 +1232,7 @@ function renderHome(){
   countTo($("total"),total); countTo($("yearTotal"),year); countTo($("next30"),next30);
   $("totalSub").textContent=subs.length? subs.length+(subs.length===1?" assinatura":" assinaturas")+" · valores convertidos para mês" : "toque em + para adicionar";
 
+  if(typeof runDetection==="function"&&typeof CATALOG!=="undefined") runDetection();
   $("pendBanner").innerHTML = pending.length ?
     '<div class="pend-banner" id="pendGo"><b>'+pending.length+(pending.length===1?" pagamento para confirmar":" pagamentos para confirmar")+'</b><span>Ver ›</span></div>' : "";
 
@@ -1564,9 +1645,15 @@ function money(s){ s=String(s||"").trim().replace(/\s|R\$/g,""); if(s.indexOf(",
 function moneyStr(v){ return v.toFixed(2).replace(".",","); }
 function curMonth(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
 function setPromoOpen(on){ $("promoWrap").classList.toggle("show",on); }
-function openForm(s){
-  editing=s||null; delArmed=false;
-  $("formTitle").textContent=s?"Editar assinatura":"Nova assinatura";
+var formSvc=null, formSugKey=null;
+function setFormSvc(id){
+  formSvc=id||null; var c=id?CAT_BY_ID[id]:null, chip=$("svcChip");
+  if(c){ chip.hidden=false; chip.innerHTML="Serviço: "+esc(c[1])+' · <button type="button" id="svcClear">trocar</button>'; $("svcClear").onclick=function(){ openCatalog(); }; }
+  else chip.hidden=true;
+}
+function openForm(s,pre){
+  editing=s||null; delArmed=false; formSugKey=pre&&pre.key||null;
+  $("formTitle").textContent=s?"Editar assinatura":pre?"Confirmar assinatura":"Nova assinatura";
   $("fName").value=s?s.name:""; $("fPrice").value=s?moneyStr(s.price):"";
   $("fCycle").value=s?s.cycle:"mensal"; $("fCat").value=s?s.cat:"streaming";
   $("fNext").value=s?s.next:fmtISO(today());
@@ -1577,6 +1664,11 @@ function openForm(s){
   setPromoOpen($("fHasPromo").checked);
   $("delBtn").hidden=!s; $("delBtn").classList.remove("armed"); $("delBtn").textContent="Excluir";
   $("err").textContent=""; $("form").scrollTop=0;
+  setFormSvc(s?s.svc:null); $("pickSvc").hidden=!!s;
+  if(pre){
+    $("fName").value=pre.name; $("fPrice").value=pre.price?moneyStr(pre.price):""; $("fCycle").value=pre.cycle||"mensal";
+    $("fCat").value=pre.cat||"outros"; if(pre.next) $("fNext").value=pre.next; setFormSvc(pre.svc); $("pickSvc").hidden=true;
+  }
   openSheet("overlay");
 }
 function closeForm(){ closeSheet("overlay"); editing=null; }
@@ -1617,7 +1709,8 @@ $("form").addEventListener("submit",function(e){
     if(parseMonth(ps)===null) return err("Escolha o mês em que a promoção começou.");
     promo={price:pp,months:pm,start:ps};
   }
-  var data={name:name,price:price,cycle:$("fCycle").value,cat:$("fCat").value,next:next,promo:promo};
+  var data={name:name,price:price,cycle:$("fCycle").value,cat:$("fCat").value,next:next,promo:promo,svc:formSvc||(editing&&editing.svc)||matchService(name)||null};
+  if(formSugKey){ markSugDone(formSugKey); formSugKey=null; }
   var msg=editing?"Alterações salvas":"Assinatura adicionada";
   if(editing){ for(var k in data) editing[k]=data[k]; newId=editing.id; }
   else { data.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6); data.createdAt=fmtISO(today()); subs.push(data); newId=data.id; }
@@ -1632,7 +1725,7 @@ function syncSeg(id,val){
   seg.querySelector(".knob").style.transform="translateX("+(i*100)+"%)";
 }
 function syncSettings(){
-  renderAccount(); renderNotif(); renderLockSettings(); renderAbout();
+  renderAccount(); renderNotif(); renderLockSettings(); renderAbout(); renderDetect();
   var t=window.getThemePref?getThemePref():"auto", m=payMode();
   syncSeg("themeSeg",t); syncSeg("paySeg",m); $("hoursIn").value=hoursPerMonth();
   $("themeHint").textContent=t==="auto"?"Automático segue o tema do celular.":t==="light"?"O app fica sempre no modo claro.":"O app fica sempre no modo escuro.";
@@ -1665,6 +1758,8 @@ $("toastAct").onclick=function(){ var f=toastFn; toastFn=null; $("toast").classL
 window.handleBack=function(){
   if(!$("lock").hidden) return false;
   if(tipFor){ hideTip(); return true; }
+  if($("catSheet").classList.contains("open")){ closeSheet("catSheet"); return true; }
+  if($("sugSheet").classList.contains("open")){ closeSheet("sugSheet"); return true; }
   if($("pinSheet").classList.contains("open")){ closeSheet("pinSheet"); return true; }
   if($("emailSheet").classList.contains("open")){ closeSheet("emailSheet"); return true; }
   if($("mergeSheet").classList.contains("open")) return true;
@@ -2170,7 +2265,7 @@ $("lockSeg").addEventListener("click",function(e){
 });
 
 /* ================= ATUALIZAÇÕES (GitHub Releases) ================= */
-var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="1.7", UPD_EVERY=6*3600*1000;
+var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="1.8", UPD_EVERY=6*3600*1000;
 var updState="", updManual=false, updBusy=false;
 function appVersion(){ try{ var v=BR&&BR.appVersion?BR.appVersion():""; if(v) return v; }catch(e){} return APP_VERSION_FALLBACK; }
 function verParts(v){ return String(v||"").replace(/^[^0-9]*/,"").split(/[^0-9]+/).filter(function(x){return x!=="";}).map(Number); }
@@ -2261,11 +2356,346 @@ function renderUpdLine(){
   var c=$("updCheck"); if(c) c.onclick=function(){ checkUpdate(true); };
 }
 
-initCloud(); load(); syncPayments(); renderAll(); renderAbout(); maybeWelcome(); scheduleReminders();
+/* ================= DETECTAR ASSINATURAS ================= */
+/* Catálogo: [id, nome, categoria, ciclo, cor, apelidos que aparecem no extrato/notificação] */
+var CATALOG=[
+  ["netflix","Netflix","streaming","mensal","#e50914",["NETFLIX"]],
+  ["disney","Disney+","streaming","mensal","#113ccf",["DISNEY PLUS","DISNEYPLUS","DISNEY"]],
+  ["prime","Amazon Prime","streaming","mensal","#00a8e1",["AMAZON PRIME","AMAZONPRIME","PRIME VIDEO","PRIMEVIDEO","AMZN PRIME"]],
+  ["max","Max","streaming","mensal","#002be7",["HBO MAX","HBOMAX","WWW MAX COM","MAX COM","HBO"]],
+  ["globoplay","Globoplay","streaming","mensal","#fb0234",["GLOBOPLAY","GLOBO PLAY"]],
+  ["paramount","Paramount+","streaming","mensal","#0064ff",["PARAMOUNT"]],
+  ["appletv","Apple TV+","streaming","mensal","#333333",["APPLE TV"]],
+  ["crunchyroll","Crunchyroll","streaming","mensal","#f47521",["CRUNCHYROLL"]],
+  ["ytpremium","YouTube Premium","streaming","mensal","#ff0000",["YOUTUBE PREMIUM","YOUTUBEPREMIUM","GOOGLE YOUTUBE","YOUTUBE"]],
+  ["telecine","Telecine","streaming","mensal","#d4001a",["TELECINE"]],
+  ["mubi","MUBI","streaming","mensal","#001489",["MUBI"]],
+  ["spotify","Spotify","musica","mensal","#1db954",["SPOTIFY"]],
+  ["deezer","Deezer","musica","mensal","#a238ff",["DEEZER"]],
+  ["ytmusic","YouTube Music","musica","mensal","#ff0000",["YOUTUBE MUSIC","YOUTUBEMUSIC"]],
+  ["applemusic","Apple Music","musica","mensal","#fa243c",["APPLE MUSIC"]],
+  ["amazonmusic","Amazon Music","musica","mensal","#25d1da",["AMAZON MUSIC"]],
+  ["tidal","Tidal","musica","mensal","#111111",["TIDAL"]],
+  ["chatgpt","ChatGPT Plus","software","mensal","#10a37f",["OPENAI","CHATGPT"]],
+  ["claude","Claude Pro","software","mensal","#d97757",["ANTHROPIC","CLAUDE AI"]],
+  ["m365","Microsoft 365","software","mensal","#d83b01",["MICROSOFT 365","MICROSOFT365","OFFICE 365","MSFT"]],
+  ["adobe","Adobe","software","mensal","#fa0f00",["ADOBE"]],
+  ["canva","Canva","software","mensal","#00c4cc",["CANVA"]],
+  ["notion","Notion","software","mensal","#111111",["NOTION"]],
+  ["linkedin","LinkedIn Premium","software","mensal","#0a66c2",["LINKEDIN"]],
+  ["apple","Apple (App Store / iCloud)","software","mensal","#555555",["APPLE COM BILL","APPLE COM","ITUNES"]],
+  ["googleplay","Google Play (assinatura)","software","mensal","#01875f",["GOOGLE PLAY","GOOGLE STORE"]],
+  ["discord","Discord Nitro","jogos","mensal","#5865f2",["DISCORD"]],
+  ["gamepass","Xbox Game Pass","jogos","mensal","#107c10",["XBOX","GAME PASS","GAMEPASS"]],
+  ["psplus","PlayStation Plus","jogos","mensal","#003791",["PLAYSTATION","PSN","SONY INTERACTIVE"]],
+  ["nintendo","Nintendo Switch Online","jogos","anual","#e60012",["NINTENDO"]],
+  ["eaplay","EA Play","jogos","mensal","#ff4747",["EA PLAY","ELECTRONIC ARTS"]],
+  ["ubisoft","Ubisoft+","jogos","mensal","#0070ff",["UBISOFT"]],
+  ["smartfit","Smart Fit","saude","mensal","#ffb800",["SMARTFIT","SMART FIT"]],
+  ["bluefit","Bluefit","saude","mensal","#0057b8",["BLUEFIT"]],
+  ["wellhub","Wellhub (Gympass)","saude","mensal","#d8385e",["WELLHUB","GYMPASS"]],
+  ["totalpass","TotalPass","saude","mensal","#00a650",["TOTALPASS","TOTAL PASS"]],
+  ["bodytech","Bodytech","saude","mensal","#e30613",["BODYTECH"]],
+  ["duolingo","Duolingo Super","educacao","mensal","#58cc02",["DUOLINGO"]],
+  ["alura","Alura","educacao","mensal","#051933",["ALURA"]],
+  ["coursera","Coursera Plus","educacao","mensal","#0056d2",["COURSERA"]],
+  ["kindle","Kindle Unlimited","educacao","mensal","#ff9900",["KINDLE"]],
+  ["googleone","Google One","nuvem","mensal","#4285f4",["GOOGLE ONE","GOOGLE STORAGE"]],
+  ["icloud","iCloud+","nuvem","mensal","#3693f3",["ICLOUD"]],
+  ["dropbox","Dropbox","nuvem","mensal","#0061ff",["DROPBOX"]],
+  ["claro","Claro","telefone","mensal","#da291c",["CLARO S A","CLARO SA","CLARO FLEX","CLARO NET","CLARO"]],
+  ["vivo","Vivo","telefone","mensal","#660099",["VIVO EASY","TELEFONICA","VIVO"]],
+  ["tim","TIM","telefone","mensal","#004691",["TIM S A","TIM SA","TIM CELULAR","TIM"]],
+  ["oi","Oi","telefone","mensal","#ffcc00",["OI FIBRA","OI S A","OI MOVEL"]],
+  ["folha","Folha de S.Paulo","noticias","mensal","#003c71",["FOLHA DE S PAULO","FOLHA"]],
+  ["estadao","Estadão","noticias","mensal","#0b2c4a",["ESTADAO"]],
+  ["oglobo","O Globo","noticias","mensal","#0e4e9b",["O GLOBO","INFOGLOBO"]],
+  ["medium","Medium","noticias","mensal","#111111",["MEDIUM"]],
+  ["ifood","iFood Clube","outros","mensal","#ea1d2c",["IFOOD CLUBE","IFOOD CLUB"]],
+  ["uberone","Uber One","outros","mensal","#111111",["UBER ONE"]],
+  ["rappi","Rappi Prime","outros","mensal","#ff441f",["RAPPI PRIME","RAPPI"]],
+  ["meli","Meli+ (Mercado Livre)","outros","mensal","#ffe600",["MELI","MERCADO LIVRE ASSINATURA"]],
+  ["tinder","Tinder","outros","mensal","#fd297b",["TINDER"]],
+  ["bumble","Bumble","outros","mensal","#ffc629",["BUMBLE"]]
+];
+var CAT_BY_ID={}; CATALOG.forEach(function(c){ CAT_BY_ID[c[0]]=c; });
+/* apelidos mais longos primeiro (YouTube Music antes de YouTube) */
+var ALIASES=[]; CATALOG.forEach(function(c){ c[5].forEach(function(a){ var cp=a.replace(/ /g,""); ALIASES.push({a:" "+a+" ",cp:cp.length>=6?cp:null,id:c[0],len:a.length}); }); });
+ALIASES.sort(function(x,y){ return y.len-x.len; });
+
+function normTxt(s){
+  return " "+String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase()
+    .replace(/\+/g," PLUS ").replace(/[^A-Z0-9]+/g," ").replace(/\s+/g," ").trim()+" ";
+}
+function matchService(text){
+  var n=normTxt(text), cp=n.replace(/ /g,"");
+  for(var i=0;i<ALIASES.length;i++){ var A=ALIASES[i]; if(n.indexOf(A.a)>=0||(A.cp&&cp.indexOf(A.cp)>=0)) return A.id; }
+  return null;
+}
+/* nome do estabelecimento sem códigos de maquininha / gateway */
+var LEAD=/^ (COMPRA (NO|NA|DE|COM) (DEBITO|CREDITO|CARTAO)( VIRTUAL)?|TRANSFERENCIA ENVIADA( PELO PIX)?|TRANSFERENCIA PIX|PIX ENVIADO( PARA)?|PAGAMENTO (DE BOLETO|EFETUADO|DE CONTA)|DEBITO AUTOMATICO|COMPRA|DEBITO|PIX) /;
+function merchantKey(s){
+  var n=normTxt(s).replace(LEAD," ").replace(LEAD," ")
+    .replace(/ (PAG|PG|EBN|EBANX|DL|IFD|MP|MERCADOPAGO|PAYPAL|PAYGO|SUMUP|STONE|CIELO|GETNET|PICPAY|ZP|HTM|BR|SP|RJ|MG|SAO PAULO|RIO DE JANEIRO|BRA|BRASIL|COM|WWW|LTDA|ME|EIRELI|SA|S A|PARC|PARCELA) /g," ")
+    .replace(/ \d+ /g," ").replace(/ \d+ /g," ").replace(/\s+/g," ").trim();
+  return n.split(" ").filter(function(w){ return w.length>1; }).slice(0,3).join(" ");
+}
+function prettyName(k){ return k.toLowerCase().replace(/\b[a-z]/g,function(c){ return c.toUpperCase(); }); }
+
+/* --- leitura de valores e datas --- */
+function parseMoney(s){
+  s=String(s||"").replace(/R\$|\s/g,"");
+  var neg=/^-|-$|^\(.*\)$/.test(s); s=s.replace(/[()\-+]/g,"");
+  if(/,\d{1,2}$/.test(s)) s=s.replace(/\./g,"").replace(",",".");
+  else s=s.replace(/,/g,"");
+  var v=parseFloat(s); if(!isFinite(v)) return NaN;
+  return neg?-v:v;
+}
+function parseAnyDate(s){
+  s=String(s||"").trim(); var m;
+  if((m=s.match(/^(\d{4})-?(\d{2})-?(\d{2})/))) return new Date(+m[1],+m[2]-1,+m[3]);
+  if((m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/))){ var y=+m[3]; if(y<100) y+=2000; return new Date(y,+m[2]-1,+m[1]); }
+  return null;
+}
+
+/* --- extrato: OFX --- */
+function parseOFX(txt){
+  var out=[];
+  txt.split(/<STMTTRN>/i).slice(1).forEach(function(b){
+    var f=function(tag){ var m=b.match(new RegExp("<"+tag+">([^<\\r\\n]*)","i")); return m?m[1].trim():""; };
+    var d=parseAnyDate(f("DTPOSTED")), v=parseMoney(f("TRNAMT")), desc=f("MEMO")||f("NAME");
+    if(d&&isFinite(v)&&desc) out.push({d:d,v:v,desc:desc});
+  });
+  return out;
+}
+/* --- extrato: CSV (descobre sozinho as colunas de data, valor e descrição) --- */
+function splitCSVLine(line,sep){
+  var out=[],cur="",q=false;
+  for(var i=0;i<line.length;i++){ var ch=line[i];
+    if(ch==='"'){ if(q&&line[i+1]==='"'){ cur+='"'; i++; } else q=!q; }
+    else if(ch===sep&&!q){ out.push(cur); cur=""; } else cur+=ch; }
+  out.push(cur); return out.map(function(x){ return x.trim(); });
+}
+function parseCSV(txt){
+  var lines=txt.split(/\r?\n/).filter(function(l){ return l.trim(); }); if(lines.length<2) return [];
+  var sample=lines.slice(0,10).join("\n"), sep=[";",",","\t"].sort(function(a,b){ return sample.split(b).length-sample.split(a).length; })[0];
+  var rows=lines.map(function(l){ return splitCSVLine(l,sep); });
+  var nc=Math.max.apply(null,rows.map(function(r){ return r.length; })), score=[];
+  for(var c=0;c<nc;c++){
+    var dates=0,nums=0,letters=0,n=0;
+    rows.slice(1,80).forEach(function(r){ var x=r[c]||""; if(!x) return; n++;
+      if(parseAnyDate(x)&&/\d/.test(x)&&x.length<=12) dates++;
+      else if(/^[-+(]?\s*(R\$)?\s*-?[\d.]+(,\d{1,2})?\)?$|^-?\d+(\.\d{1,2})?$/.test(x.replace(/\s/g,""))) nums++;
+      letters+=(x.match(/[A-Za-zÀ-ú]/g)||[]).length; });
+    score.push({c:c,dates:dates/(n||1),nums:nums/(n||1),letters:letters/(n||1)});
+  }
+  var dc=score.slice().sort(function(a,b){return b.dates-a.dates;})[0];
+  var vc=score.filter(function(s){return s!==dc;}).sort(function(a,b){return b.nums-a.nums;})[0];
+  var tc=score.filter(function(s){return s!==dc&&s!==vc;}).sort(function(a,b){return b.letters-a.letters;})[0];
+  if(!dc||!vc||!tc||dc.dates<0.5||vc.nums<0.5) return [];
+  var out=[];
+  rows.forEach(function(r){ var d=parseAnyDate(r[dc.c]), v=parseMoney(r[vc.c]), t=r[tc.c];
+    if(d&&isFinite(v)&&t&&/[A-Za-z]/.test(t)) out.push({d:d,v:v,desc:t}); });
+  return out;
+}
+/* deixa só os gastos (em extrato de conta são negativos; em fatura de cartão, positivos) */
+function onlyExpenses(list){
+  var neg=list.filter(function(x){return x.v<0;}).length, pos=list.length-neg;
+  var expNeg=neg>=pos;
+  return list.filter(function(x){ return expNeg?x.v<0:x.v>0; }).map(function(x){ return {d:x.d,v:Math.abs(x.v),desc:x.desc}; });
+}
+
+/* --- notificações de banco --- */
+function parsePurchaseText(t){
+  if(/recebid|recebeu|estorn|devolu|reembols|cashback|dep[oó]sito/i.test(t)) return null;
+  var m=t.match(/R\$\s?-?\s?([\d.]+,\d{2}|\d+(?:\.\d{2})?)/); if(!m) return null;
+  var v=parseMoney(m[1]); if(!(v>0)) return null;
+  var merch="", r;
+  if((r=t.match(/\bem\s+(.{2,45}?)(?:\s+(?:foi|para|no cart|na data|às|as \d|dia \d|com o cart|com cart)|[.;!\n]|$)/i))) merch=r[1];
+  else if((r=t.match(/(?:estabelecimento|loja|local)[:\s]+(.{2,40}?)(?:[.;,\n]|$)/i))) merch=r[1];
+  else if((r=t.match(/\b(?:de|para)\s+([A-Z][A-Z0-9 .*&-]{2,40})/))) merch=r[1];
+  merch=merch.replace(/R\$.*$/,"").replace(/\s+-\s*$/,"").trim();
+  return {v:v,desc:merch||t};
+}
+
+/* --- encontrar assinaturas --- */
+function findCandidates(events){
+  var known={}, groups={};
+  events.forEach(function(e){
+    var svc=matchService(e.desc)||(e.raw?matchService(e.raw):null);
+    if(svc){ var x=known[svc]||(known[svc]={svc:svc,all:[]}); x.all.push(e); return; }
+    var mk=merchantKey(e.desc); if(!mk||mk.length<3) return;
+    (groups[mk]=groups[mk]||[]).push(e);
+  });
+  var out=[];
+  Object.keys(known).forEach(function(id){
+    var x=known[id], c=CAT_BY_ID[id]; x.all.sort(function(a,b){return a.d-b.d;});
+    var last=x.all[x.all.length-1];
+    out.push({key:"svc:"+id,svc:id,name:c[1],cat:c[2],cycle:c[3],price:Math.round(last.v*100)/100,last:last.d,seen:x.all.map(function(e){return e.d;}),src:last.src,app:last.app});
+  });
+  /* estabelecimentos desconhecidos: precisa se repetir mês a mês com valor parecido */
+  Object.keys(groups).forEach(function(mk){
+    var l=groups[mk].slice().sort(function(a,b){return a.d-b.d;});
+    var runs=0, best=null;
+    for(var i=1;i<l.length;i++){
+      var days=(l[i].d-l[i-1].d)/86400000, dv=Math.abs(l[i].v-l[i-1].v)/Math.max(l[i].v,l[i-1].v);
+      if(days>=26&&days<=35&&dv<=0.15){ runs++; best=l[i]; }
+    }
+    if(runs>=1&&best) out.push({key:"m:"+mk,svc:null,name:prettyName(mk),cat:"outros",cycle:"mensal",price:Math.round(best.v*100)/100,last:best.d,seen:l.map(function(e){return e.d;}),src:best.src,app:best.app});
+  });
+  return out;
+}
+function nextFrom(last,cycle){
+  var t=today(), d=new Date(last.getTime()), day=last.getDate(), guard=0;
+  var step=(CYCLES[cycle]||CYCLES.mensal).m||1;
+  var k=0, base=d;
+  while(d<t&&guard++<600){ k+=step; d=addMonthsKeepDay(base,k,day); }
+  return d;
+}
+
+/* --- catálogo na tela --- */
+var CATNAMES={}; CATS.forEach(function(c){ CATNAMES[c.id]=c.n; });
+function svcAvatar(id,name,cat){
+  var c=id?CAT_BY_ID[id]:null, col=c?c[4]:catById(cat).c, ini=esc(((name||"?").trim()[0]||"?").toUpperCase());
+  var light=/^#(f|e|d)[0-9a-f]{1}(f|e|d)/i.test(col);
+  return '<div class="avatar" style="background:'+col+';color:'+(light?"#222":"#fff")+'">'+ini+'</div>';
+}
+function openCatalog(){ $("catQ").value=""; renderCatalog(); openSheet("catSheet"); }
+function renderCatalog(){
+  var q=normTxt($("catQ").value).trim(), html="";
+  CATS.forEach(function(cat){
+    var items=CATALOG.filter(function(c){ return c[2]===cat.id&&(!q||normTxt(c[1]+" "+cat.n).indexOf(q)>=0||c[5].some(function(a){ return normTxt(a).indexOf(q)>=0; })); });
+    if(!items.length) return;
+    html+='<div class="cat-group">'+esc(cat.n)+'</div>'+items.map(function(c){
+      return '<button type="button" class="cat-item" data-svc="'+c[0]+'">'+svcAvatar(c[0],c[1])+'<b>'+esc(c[1])+'</b></button>';
+    }).join("");
+  });
+  $("catList").innerHTML=html||'<div class="empty">Nenhum serviço com esse nome. Feche e digite o nome à mão.</div>';
+}
+$("catQ").addEventListener("input",renderCatalog);
+$("catClose").onclick=function(){ closeSheet("catSheet"); };
+$("catSheet").addEventListener("click",function(e){ if(e.target===this) closeSheet("catSheet"); });
+$("pickSvc").onclick=openCatalog;
+$("catList").addEventListener("click",function(e){
+  var b=e.target.closest("[data-svc]"); if(!b) return; var c=CAT_BY_ID[b.dataset.svc];
+  $("fName").value=c[1]; $("fCat").value=c[2]; $("fCycle").value=c[3]; setFormSvc(c[0]);
+  closeSheet("catSheet"); setTimeout(function(){ $("fPrice").focus(); },250);
+});
+
+/* --- dados guardados da detecção (ficam só no celular) --- */
+var DETKEY="abysssub.detect", STMTKEY="abysssub.stmt", sugList=[];
+function detStore(){ return lsGet(DETKEY,{})||{}; }
+function setDetStore(s){ try{ localStorage.setItem(DETKEY,JSON.stringify(s)); }catch(e){} }
+function markSugDone(key){ var s=detStore(); s.ignored=s.ignored||[]; if(s.ignored.indexOf(key)<0) s.ignored.push(key); setDetStore(s); }
+function stmtEvents(){ return (lsGet(STMTKEY,[])||[]).map(function(x){ return {d:parseDate(x.d),v:x.v,desc:x.t,src:"extrato"}; }).filter(function(e){ return e.d; }); }
+function notifEvents(){
+  var raw=[]; try{ if(BR&&BR.getPurchases) raw=JSON.parse(BR.getPurchases()||"[]"); }catch(e){}
+  var out=[]; raw.forEach(function(n){ var p=parsePurchaseText(n.text||""); if(!p) return; var d=new Date(n.at); d.setHours(0,0,0,0);
+    out.push({d:d,v:p.v,desc:p.desc,raw:n.text,src:"notificação",app:n.app}); });
+  return out;
+}
+function haveSub(c){
+  var cn=normTxt(c.name).trim();
+  return subs.some(function(s){
+    if(c.svc&&(s.svc===c.svc||matchService(s.name)===c.svc)) return true;
+    var sn=normTxt(s.name).trim(); return sn&&(sn===cn||(sn.length>=4&&cn.indexOf(sn)>=0)||(cn.length>=4&&sn.indexOf(cn)>=0));
+  });
+}
+function runDetection(){
+  var st=detStore(), ign=st.ignored||[];
+  sugList=findCandidates(stmtEvents().concat(notifEvents())).filter(function(c){ return ign.indexOf(c.key)<0&&!haveSub(c); })
+    .sort(function(a,b){ return b.last-a.last; });
+  renderSugBanner();
+  if($("sugSheet").classList.contains("open")) renderSugList();
+  return sugList;
+}
+function renderSugBanner(){
+  var el=$("sugBanner"); if(!el) return;
+  el.innerHTML=sugList.length?'<div class="sug-banner" id="sugGo">'+SPARK+'<b>'+sugList.length+(sugList.length===1?" assinatura encontrada":" assinaturas encontradas")+'</b><span>Revisar ›</span></div>':"";
+}
+var SPARK='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9zM19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z"/></svg>';
+function fmtShort(d){ return d.getDate()+"/"+MESES[d.getMonth()]; }
+function renderSugList(){
+  $("sugList").innerHTML=sugList.length?sugList.map(function(c,i){
+    var nx=nextFrom(c.last,c.cycle), seen=c.seen.slice(-4).map(fmtShort).join(", ");
+    var ev=(c.seen.length>1?"Visto "+c.seen.length+"x: ":"Visto em ")+seen+" · "+(c.src==="notificação"?"notificação"+(c.app?" do "+esc(c.app):""):"extrato");
+    return '<div class="sug anim-in" style="--i:'+i+'" data-key="'+esc(c.key)+'"><div class="top">'+svcAvatar(c.svc,c.name,c.cat)+
+      '<div class="info"><b>'+esc(c.name)+'</b><span>'+brl(c.price)+' · '+(c.cycle==="anual"?"por ano":"todo dia "+nx.getDate())+' · '+esc(CATNAMES[c.cat]||"Outros")+'</span></div></div>'+
+      '<div class="ev">'+ev+'</div><div class="acts"><button type="button" class="no" data-ign="'+esc(c.key)+'">Ignorar</button><button type="button" class="yes" data-add="'+esc(c.key)+'">Adicionar</button></div></div>';
+  }).join(""):'<div class="empty">Nenhuma assinatura nova encontrada.<br>Importe um extrato ou ative a leitura das notificações do banco em Configurações.</div>';
+}
+function openSug(){ runDetection(); renderSugList(); openSheet("sugSheet"); }
+$("sugClose").onclick=function(){ closeSheet("sugSheet"); };
+$("sugSheet").addEventListener("click",function(e){ if(e.target===this) closeSheet("sugSheet"); });
+document.addEventListener("click",function(e){ if(e.target.closest("#sugGo")) openSug(); });
+$("sugList").addEventListener("click",function(e){
+  var a=e.target.closest("[data-add]"), n=e.target.closest("[data-ign]");
+  if(n){ var key=n.dataset.ign, row=n.closest(".sug"); markSugDone(key); row.classList.add("out");
+    setTimeout(function(){ runDetection(); renderSugList(); },300);
+    toast("Sugestão ignorada","Desfazer",function(){ var s=detStore(); s.ignored=(s.ignored||[]).filter(function(k){return k!==key;}); setDetStore(s); runDetection(); renderSugList(); }); return; }
+  if(a){ var c=sugList.filter(function(x){ return x.key===a.dataset.add; })[0]; if(!c) return;
+    closeSheet("sugSheet");
+    setTimeout(function(){ openForm(null,{key:c.key,name:c.name,price:c.price,cycle:c.cycle,cat:c.cat,svc:c.svc,next:fmtISO(nextFrom(c.last,c.cycle))}); },220); }
+});
+
+/* --- importar extrato --- */
+function readFileText(file,cb){
+  var r=new FileReader();
+  r.onload=function(){ var t=String(r.result||"");
+    if(t.indexOf("�")>=0){ var r2=new FileReader(); r2.onload=function(){ cb(String(r2.result||"")); }; r2.readAsText(file,"iso-8859-1"); }
+    else cb(t); };
+  r.onerror=function(){ cb(""); };
+  r.readAsText(file,"utf-8");
+}
+$("stmtFile").addEventListener("change",function(){
+  var f=this.files&&this.files[0]; this.value=""; if(!f) return;
+  toast("Lendo o extrato…");
+  readFileText(f,function(txt){
+    var list=/<STMTTRN>|<OFX>/i.test(txt)?parseOFX(txt):parseCSV(txt);
+    if(!list.length){ toast("Não consegui ler esse arquivo. Exporte o extrato em OFX ou CSV no app do banco."); return; }
+    var exp=onlyExpenses(list), cur=lsGet(STMTKEY,[])||[], seen={};
+    cur.forEach(function(x){ seen[x.d+"|"+x.v+"|"+x.t]=1; });
+    var added=0, cutoff=fmtISO(new Date(today().getFullYear()-2,today().getMonth(),1));
+    exp.forEach(function(e){ var x={d:fmtISO(e.d),v:Math.round(e.v*100)/100,t:String(e.desc).slice(0,80)}; var k=x.d+"|"+x.v+"|"+x.t;
+      if(!seen[k]&&x.d>=cutoff){ seen[k]=1; cur.push(x); added++; } });
+    cur.sort(function(a,b){ return a.d<b.d?-1:1; }); if(cur.length>4000) cur=cur.slice(-4000);
+    try{ localStorage.setItem(STMTKEY,JSON.stringify(cur)); }catch(e){}
+    var found=runDetection().length;
+    toast("Extrato lido: "+list.length+" lançamentos · "+(found?found+(found===1?" assinatura encontrada":" assinaturas encontradas"):"nenhuma assinatura nova"));
+    if(found){ closeSheet("settings"); setTimeout(openSug,350); }
+    renderDetect();
+  });
+});
+
+/* --- configurações da detecção --- */
+function detAccess(){ try{ return !!(BR&&BR.detectAccess&&BR.detectAccess()); }catch(e){ return false; } }
+function renderDetect(){
+  var box=$("detBox"); if(!box) return;
+  var on=detAccess(), sdk=0; try{ sdk=BR&&BR.sdkInt?BR.sdkInt():0; }catch(e){}
+  var nStmt=(lsGet(STMTKEY,[])||[]).length;
+  box.innerHTML=
+    '<div class="det-row"><div><span>Notificações do banco</span><small class="'+(on?"st-on":"")+'">'+(BR?(on?"Ligado: lendo as notificações de compra":"Desligado"):"Disponível no app Android")+'</small></div>'+
+      (BR?'<button type="button" class="btn '+(on?"ghost":"primary")+'" id="detPerm">'+(on?"Gerenciar":"Ativar")+'</button>':"")+'</div>'+
+    (BR&&!on&&sdk>=33?'<div class="det-help">Se a opção do AbyssSub aparecer bloqueada ("configuração restrita"), abra <button type="button" id="detInfo">as informações do app</button>, toque nos 3 pontinhos ⋮ e em <b>Permitir configurações restritas</b>. Depois volte e toque em Ativar.</div>':"")+
+    '<div class="det-acts"><button type="button" class="btn ghost" id="detImport">Importar extrato do banco (OFX ou CSV)</button>'+
+      '<button type="button" class="btn ghost" id="detSee">Ver assinaturas encontradas ('+sugList.length+')</button></div>'+
+    '<div class="det-note">Tudo é analisado no próprio celular e nada é enviado.'+(nStmt?" "+nStmt+" lançamentos de extrato guardados · ":" ")+'<button type="button" class="textlink" id="detClear" style="display:inline;padding:0;font-size:12px">Limpar dados da detecção</button></div>';
+  var b;
+  if((b=$("detPerm"))) b.onclick=function(){ try{ BR.openDetectSettings(); }catch(e){} toast("Ative o AbyssSub na lista e volte para o app"); };
+  if((b=$("detInfo"))) b.onclick=function(){ try{ BR.openAppSettings(); }catch(e){} };
+  $("detImport").onclick=function(){ $("stmtFile").click(); };
+  $("detSee").onclick=function(){ closeSheet("settings"); setTimeout(openSug,250); };
+  $("detClear").onclick=function(){
+    try{ localStorage.removeItem(STMTKEY); localStorage.removeItem(DETKEY); if(BR&&BR.clearPurchases) BR.clearPurchases(); }catch(e){}
+    runDetection(); renderDetect(); toast("Dados da detecção apagados");
+  };
+}
+
+initCloud(); load(); syncPayments(); renderAll(); renderAbout(); maybeWelcome(); scheduleReminders(); runDetection();
 setTimeout(function(){ checkUpdate(false); },2500);
 if(lockCfg().mode!=="off"){ showLock(true); } else unlocked=true;
 setTimeout(function(){ document.body.classList.remove("boot"); },1400);
-document.addEventListener("visibilitychange",function(){ if(!document.hidden){ syncPayments(); renderAll(); checkUpdate(false); } });
+document.addEventListener("visibilitychange",function(){ if(!document.hidden){ syncPayments(); renderAll(); checkUpdate(false); runDetection(); if($("settings").classList.contains("open")) renderDetect(); } });
 })();
 </script>
 </body>

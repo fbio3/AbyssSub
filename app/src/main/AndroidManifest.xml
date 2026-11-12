@@ -33,6 +33,17 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Detectar assinaturas pelas notificações de compra dos bancos (o usuário ativa nas configurações) -->
+        <service
+            android:name=".PurchaseListener"
+            android:label="AbyssSub: detectar assinaturas"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <!-- Lembretes de cobrança: dispara o aviso e reagenda depois de reiniciar o celular -->
         <receiver
             android:name=".ReminderReceiver"

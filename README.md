@@ -43,6 +43,12 @@
 - Backup em texto (Configurações > Backup) para guardar ou passar para outro celular
 - Sem conta, os dados ficam só no celular
 
+**Encontrar assinaturas automaticamente**
+- Catálogo com mais de 50 serviços populares para cadastrar com um toque
+- Importa o extrato do banco (OFX ou CSV) e encontra as assinaturas que você já paga
+- Lê as notificações de compra dos apps de banco (opcional) e sugere novas assinaturas
+- Tudo é analisado no celular; nada é cadastrado sem você confirmar
+
 **Lembretes e segurança**
 - Notificação antes de cada cobrança (no dia, 1, 2, 3 ou 7 dias antes, no horário que você escolher)
 - Bloqueio ao abrir: senha do app, bloqueio do celular ou digital

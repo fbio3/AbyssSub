@@ -1,5 +1,24 @@
 # Histórico de mudanças do AbyssSub
 
+## v1.8
+- Novo: catálogo com mais de 50 serviços populares (streaming, música, apps, jogos, academias, celular e mais)
+- Novo: botão "Escolher da lista de serviços" no cadastro preenche nome, categoria e tipo de cobrança
+- Novo: busca no catálogo por nome ou categoria
+- Novo: importar extrato do banco em OFX ou CSV para encontrar as assinaturas que você já paga
+- Novo: o extrato é lido sozinho, descobrindo as colunas de data, valor e descrição
+- Novo: reconhece serviços conhecidos mesmo com nomes de extrato como "PG *NETFLIX.COM" ou "GOOGLE YOUTUBEPREMIUM"
+- Novo: encontra cobranças que se repetem todo mês com valor parecido, mesmo de lugares que não estão no catálogo
+- Novo: leitura das notificações de compra dos apps de banco (opcional, com sua permissão)
+- Novo: aviso "assinaturas encontradas" no Início com o botão "Revisar"
+- Novo: cada sugestão mostra valor, dia da cobrança e onde foi vista (extrato ou notificação do banco)
+- Novo: "Adicionar" abre o cadastro já preenchido para você conferir antes de salvar
+- Novo: "Ignorar" esconde a sugestão, com opção de desfazer
+- Novo: seção "Detectar assinaturas" em Configurações
+- Novo: ajuda para liberar a "configuração restrita" do Android 13 ou mais novo
+- Novo: botão para apagar todos os dados usados na detecção
+- Privacidade: extrato e notificações são analisados só no celular e nunca são enviados
+- Melhoria: Pix recebido, estornos e compras avulsas (padaria, iFood, Uber) não viram sugestão
+
 ## v1.7
 - Novo: o app verifica sozinho se existe uma versão mais nova publicada no GitHub
 - Novo: aviso de atualização com a versão atual, a nova, o que mudou e o tamanho do download
