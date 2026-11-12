@@ -1,5 +1,18 @@
 # Histórico de mudanças do AbyssSub
 
+## v2.2
+- Correção: notificações de pagamento sem nome de loja não aparecem mais com a data como nome (ex.: "12/11/2026"); agora mostram "Pagamento (Nubank)", "Pix enviado" etc.
+- Correção: notificações de pagamento da fatura do cartão não contam mais como gasto
+- Gastos: opção "juntar" para dizer que dois nomes são o mesmo lugar (ex.: "Pagseguro International" é a Steam), com opção de separar depois
+- Gastos: dá para dizer que um gasto é de uma assinatura que você já tem, mesmo com nome diferente
+- Assinaturas: campo "Outros nomes" para cobranças que aparecem com outro nome no extrato
+- Assinaturas: ao renomear uma assinatura, o nome antigo continua valendo para achar as cobranças
+- Assinaturas: botão para juntar duas assinaturas que são a mesma (o histórico passa para uma só)
+- Gastos: nova categoria Jogos (Steam, Roblox, PlayStation, Xbox, Nintendo, Epic, Riot, Free Fire e outros)
+- Gastos: lista de lojas e apps onde mais se gasta (jogos, delivery, transporte, compras, mercado, farmácia, lazer…) com ícone de cada um
+- Gastos: foto personalizada para cada lugar, escolhida da galeria
+- Assinaturas: mais serviços na lista, como Roblox Premium, Fortnite Crew, GeForce NOW, Twitch, Gemini, Perplexity, NordVPN, Audible e Strava
+
 ## v2.1
 - Nova aba Investir (entre Renda e Histórico): simulador de investimentos com valor inicial, aporte mensal e prazo em dias, meses ou anos
 - Investir: rendimento em % do CDI, prefixado, IPCA + taxa ou poupança, com IR pela tabela regressiva e IOF nos primeiros 30 dias

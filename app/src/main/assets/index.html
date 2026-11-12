@@ -648,6 +648,12 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
 .months .ign-mine{display:inline-flex;align-items:center;gap:6px;padding-right:4px}
 .months .ign-mine button{border:0;background:var(--line);color:var(--text);width:20px;height:20px;border-radius:50%;font-weight:800;line-height:1;cursor:pointer;padding:0}
 
+/* ---------- v2.2 ---------- */
+#catSheet,#photoSheet,#joinSheet{z-index:50}
+.join-sub{color:var(--muted);font-size:14px;margin:-6px 0 12px}
+.cat-item small{display:block;font-size:12px;color:var(--muted);font-weight:500}
+.aka-hint{font-size:12px;color:var(--muted);margin:-8px 0 12px}
+.linkbtn.join{display:block;margin:-4px 0 14px}
 /* ---------- v2.1 ---------- */
 /* abas que entram pela direita faziam a página "sumir" por um instante (o WebView reajustava a largura) */
 html,body{overflow-x:hidden}
@@ -978,6 +984,9 @@ html,body{overflow-x:hidden}
     <div class="svc-chip" id="svcChip" hidden></div>
     <div class="photo-row"><div id="fAvatar"></div><div><b>Foto</b><small id="fPhotoInfo">Letra colorida</small><button type="button" class="linkbtn" id="fPhotoBtn">Mudar foto</button></div></div>
     <div class="field"><label for="fName">Nome</label><input id="fName" placeholder="Ex.: Netflix" maxlength="40"></div>
+    <div class="field"><label for="fAka">Outros nomes (opcional)</label><input id="fAka" placeholder="Ex.: HBO Max, nome antigo, como aparece no extrato" maxlength="160"></div>
+    <p class="aka-hint">Separe por vírgula. Cobranças com esses nomes contam como esta assinatura.</p>
+    <button type="button" class="linkbtn join" id="fJoin" hidden>É a mesma de outra assinatura? Juntar as duas</button>
     <div class="two">
       <div class="field"><label for="fPrice">Valor (R$)</label><input id="fPrice" inputmode="decimal" placeholder="0,00"></div>
       <div class="field"><label for="fCycle">Cobrança</label>
@@ -1125,7 +1134,7 @@ html,body{overflow-x:hidden}
 <div class="overlay top" id="catSheet">
   <div class="sheet">
     <div class="grab"></div>
-    <h3>Escolher serviço</h3>
+    <h3 id="catTitle">Escolher serviço</h3>
     <div class="cat-search"><input id="catQ" type="search" placeholder="Buscar (ex.: Netflix, academia, celular)" autocomplete="off"></div>
     <div id="catList"></div>
     <div class="actions" style="margin-top:12px"><button type="button" class="btn ghost" id="catClose">Fechar</button></div>
@@ -1149,12 +1158,24 @@ html,body{overflow-x:hidden}
 <div class="overlay top" id="photoSheet">
   <div class="sheet choice">
     <div class="grab"></div>
-    <h3>Foto da assinatura</h3>
-    <p>Escolha como essa assinatura aparece no app.</p>
+    <h3 id="phTitle">Foto da assinatura</h3>
+    <p id="phText">Escolha como essa assinatura aparece no app.</p>
     <button type="button" class="btn primary" id="phGallery">Escolher da galeria</button>
     <button type="button" class="btn ghost" id="phService">Usar o ícone do serviço</button>
     <button type="button" class="btn ghost" id="phLetter">Usar a letra colorida</button>
     <button type="button" class="btn ghost" id="phCancel">Cancelar</button>
+  </div>
+</div>
+
+<!-- juntar: mesma assinatura / mesmo lugar -->
+<div class="overlay top" id="joinSheet">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3 id="joinTitle">Juntar</h3>
+    <p class="join-sub" id="joinSub"></p>
+    <div class="cat-search"><input id="joinQ" type="search" placeholder="Buscar ou digitar um nome" autocomplete="off"></div>
+    <div id="joinList"></div>
+    <div class="actions" style="margin-top:12px"><button type="button" class="btn ghost" id="joinClose">Cancelar</button></div>
   </div>
 </div>
 
@@ -1173,6 +1194,8 @@ html,body{overflow-x:hidden}
   <form class="sheet" id="buyForm" autocomplete="off">
     <div class="grab"></div>
     <h3 id="buyTitle">Nova compra</h3>
+    <button type="button" class="pickbtn" id="pickPlace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2" fill="currentColor"/><circle cx="3.5" cy="12" r="1.2" fill="currentColor"/><circle cx="3.5" cy="18" r="1.2" fill="currentColor"/></svg><span>Escolher da lista de lojas e apps</span></button>
+    <div class="photo-row"><div id="bAvatar"></div><div><b>Foto</b><small id="bPhotoInfo">Letra colorida</small><button type="button" class="linkbtn" id="bPhotoBtn">Mudar foto</button></div></div>
     <div class="field"><label for="bDesc">O que foi</label><input id="bDesc" maxlength="60" placeholder="Ex.: Mercado, Uber, presente"></div>
     <div class="two">
       <div class="field"><label for="bVal">Valor (R$)</label><input id="bVal" inputmode="decimal" placeholder="0,00"></div>
@@ -1950,15 +1973,17 @@ $("fName").addEventListener("input",function(){
   renderFormAvatar();
 });
 $("fCat").addEventListener("change",function(){ catTouched=true; renderFormAvatar(); });
+var photoMode="sub";
 $("fPhotoBtn").onclick=function(){
+  photoMode="sub"; $("phTitle").textContent="Foto da assinatura"; $("phText").textContent="Escolha como essa assinatura aparece no app.";
   var svc=formSvc||matchService($("fName").value);
   $("phService").disabled=!svc; $("phService").textContent=svc?"Usar o ícone do serviço ("+CAT_BY_ID[svc][1]+")":"Usar o ícone do serviço (nome fora da lista)";
   openSheet("photoSheet");
 };
 $("phCancel").onclick=function(){ closeSheet("photoSheet"); };
 $("photoSheet").addEventListener("click",function(e){ if(e.target===this) closeSheet("photoSheet"); });
-$("phService").onclick=function(){ formIcon=null; closeSheet("photoSheet"); renderFormAvatar(); };
-$("phLetter").onclick=function(){ formIcon="letter"; closeSheet("photoSheet"); renderFormAvatar(); };
+$("phService").onclick=function(){ if(photoMode==="buy"){ buyIcon="auto"; renderBuyAvatar(); } else { formIcon=null; renderFormAvatar(); } closeSheet("photoSheet"); };
+$("phLetter").onclick=function(){ if(photoMode==="buy"){ buyIcon="letter"; renderBuyAvatar(); } else { formIcon="letter"; renderFormAvatar(); } closeSheet("photoSheet"); };
 $("phGallery").onclick=function(){ closeSheet("photoSheet"); $("photoFile").click(); };
 $("photoFile").addEventListener("change",function(){
   var f=this.files&&this.files[0]; this.value=""; if(!f) return;
@@ -1969,7 +1994,9 @@ $("photoFile").addEventListener("change",function(){
       var S=160, c=document.createElement("canvas"); c.width=c.height=S; var x=c.getContext("2d"), m=Math.min(img.width,img.height);
       x.fillStyle="#fff"; x.fillRect(0,0,S,S);
       x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
-      formIcon=c.toDataURL("image/jpeg",0.82); renderFormAvatar(); toast("Foto escolhida. Toque em Salvar para guardar");
+      var url=c.toDataURL("image/jpeg",0.82);
+      if(photoMode==="buy"){ buyIcon=url; renderBuyAvatar(); } else { formIcon=url; renderFormAvatar(); }
+      toast("Foto escolhida. Toque em Salvar para guardar");
     };
     img.onerror=function(){ toast("Não consegui abrir essa imagem"); };
     img.src=r.result;
@@ -1990,6 +2017,7 @@ function openForm(s,pre){
   $("delBtn").hidden=!s; $("delBtn").classList.remove("armed"); $("delBtn").textContent="Excluir";
   $("err").textContent=""; $("form").scrollTop=0;
   setFormSvc(s?s.svc:null); $("pickSvc").hidden=!!s; formIcon=s&&s.icon?s.icon:null; catTouched=false;
+  $("fAka").value=s&&s.aka?s.aka.join(", "):""; $("fJoin").hidden=!(s&&subs.length>1);
   if(pre){
     $("fName").value=pre.name; $("fPrice").value=pre.price?moneyStr(pre.price):""; $("fCycle").value=pre.cycle||"mensal";
     $("fCat").value=pre.cat||"outros"; if(pre.next) $("fNext").value=pre.next; setFormSvc(pre.svc); $("pickSvc").hidden=true;
@@ -2035,10 +2063,13 @@ $("form").addEventListener("submit",function(e){
     if(parseMonth(ps)===null) return err("Escolha o mês em que a promoção começou.");
     promo={price:pp,months:pm,start:ps};
   }
-  var data={name:name,price:price,cycle:$("fCycle").value,cat:$("fCat").value,next:next,promo:promo,svc:formSvc||(editing&&editing.svc)||matchService(name)||null,icon:formIcon||undefined};
+  var aka=[]; $("fAka").value.split(/[,;]/).forEach(function(x){ x=x.trim().slice(0,40); if(x&&normKey(x)!==normKey(name)&&!aka.some(function(y){ return normKey(y)===normKey(x); })) aka.push(x); });
+  /* mudou de nome: o nome antigo continua valendo para achar as cobranças */
+  if(editing&&normKey(editing.name)!==normKey(name)&&!aka.some(function(y){ return normKey(y)===normKey(editing.name); })) aka.push(editing.name);
+  var data={name:name,price:price,cycle:$("fCycle").value,cat:$("fCat").value,next:next,promo:promo,svc:formSvc||(editing&&editing.svc)||matchService(name)||null,icon:formIcon||undefined,aka:aka.length?aka:undefined};
   if(formSugKey){ markSugDone(formSugKey); formSugKey=null; }
   var msg=editing?"Alterações salvas":"Assinatura adicionada";
-  if(editing){ for(var k in data) editing[k]=data[k]; newId=editing.id; }
+  if(editing){ for(var k in data) editing[k]=data[k]; if(!data.aka) delete editing.aka; newId=editing.id; }
   else { data.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6); data.createdAt=fmtISO(today()); subs.push(data); newId=data.id; }
   save(); closeForm();
   setTimeout(function(){ syncPayments(); renderAll(); toast(msg); },180);
@@ -2085,6 +2116,8 @@ window.handleBack=function(){
   if(!$("lock").hidden) return false;
   if(tipFor){ hideTip(); return true; }
   if($("photoSheet").classList.contains("open")){ closeSheet("photoSheet"); return true; }
+  if($("joinSheet").classList.contains("open")){ closeSheet("joinSheet"); return true; }
+  if($("catSheet").classList.contains("open")){ closeSheet("catSheet"); return true; }
   if($("actSheet").classList.contains("open")){ closeSheet("actSheet"); return true; }
   if($("buySheet").classList.contains("open")){ closeSheet("buySheet"); return true; }
   if($("refSheet").classList.contains("open")){ closeSheet("refSheet"); return true; }
@@ -2156,7 +2189,7 @@ function mergeData(a,b,aAt,bAt){
   var bn=nw.buys||{}, bo=od.buys||{}, mobj=function(a,b){ var o={},k; for(k in (b||{})) o[k]=b[k]; for(k in (a||{})) o[k]=a[k]; return o; };
   var del={}; (bo.del||[]).concat(bn.del||[]).forEach(function(x){ del[x]=1; });
   var ign={}; (bo.ign||[]).concat(bn.ign||[]).forEach(function(x){ ign[x]=1; });
-  var buys={manual:by(bn.manual,bo.manual,"id"),cat:mobj(bn.cat,bo.cat),name:mobj(bn.name,bo.name),del:Object.keys(del),ign:Object.keys(ign)};
+  var buys={manual:by(bn.manual,bo.manual,"id"),cat:mobj(bn.cat,bo.cat),name:mobj(bn.name,bo.name),del:Object.keys(del),ign:Object.keys(ign),alias:mobj(bn.alias,bo.alias),photo:mobj(bn.photo,bo.photo)};
   return {v:1,subs:by(nw.subs,od.subs,"id"),logs:by(nw.logs,od.logs,"k"),incomes:by(nw.incomes,od.incomes,"id"),prefs:nw.prefs||od.prefs,buys:buys,sims:by(nw.sims,od.sims,"id"),rates:nw.rates||od.rates};
 }
 function adoptRemote(remote,up){
@@ -2604,7 +2637,7 @@ $("lockSeg").addEventListener("click",function(e){
 });
 
 /* ================= ATUALIZAÇÕES (GitHub Releases) ================= */
-var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="2.1", UPD_EVERY=6*3600*1000;
+var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="2.2", UPD_EVERY=6*3600*1000;
 var updState="", updManual=false, updBusy=false;
 function appVersion(){ try{ var v=BR&&BR.appVersion?BR.appVersion():""; if(v) return v; }catch(e){} return APP_VERSION_FALLBACK; }
 function verParts(v){ return String(v||"").replace(/^[^0-9]*/,"").split(/[^0-9]+/).filter(function(x){return x!=="";}).map(Number); }
@@ -2717,6 +2750,18 @@ var CATALOG=[
   ["tidal","Tidal","musica","mensal","#111111",["TIDAL"]],
   ["chatgpt","ChatGPT Plus","software","mensal","#10a37f",["OPENAI","CHATGPT"]],
   ["claude","Claude Pro","software","mensal","#d97757",["ANTHROPIC","CLAUDE AI"]],
+  ["gemini","Google AI Pro (Gemini)","software","mensal","#4285f4",["GEMINI","GOOGLE AI PRO","GOOGLE AI"]],
+  ["perplexity","Perplexity Pro","software","mensal","#20808d",["PERPLEXITY"]],
+  ["midjourney","Midjourney","software","mensal","#111111",["MIDJOURNEY"]],
+  ["copilot","GitHub Copilot","software","mensal","#24292f",["GITHUB"]],
+  ["cursor","Cursor","software","mensal","#111111",["CURSOR AI","CURSOR"]],
+  ["grammarly","Grammarly","software","mensal","#15c39a",["GRAMMARLY"]],
+  ["figma","Figma","software","mensal","#a259ff",["FIGMA"]],
+  ["capcut","CapCut Pro","software","mensal","#111111",["CAPCUT"]],
+  ["nordvpn","NordVPN","software","mensal","#4687ff",["NORDVPN","NORD VPN","NORDSEC"]],
+  ["expressvpn","ExpressVPN","software","mensal","#da3940",["EXPRESSVPN","EXPRESS VPN"]],
+  ["proton","Proton","software","mensal","#6d4aff",["PROTON"]],
+  ["appleone","Apple One","software","mensal","#555555",["APPLE ONE"]],
   ["m365","Microsoft 365","software","mensal","#d83b01",["MICROSOFT 365","MICROSOFT365","OFFICE 365","MSFT"]],
   ["adobe","Adobe","software","mensal","#fa0f00",["ADOBE"]],
   ["canva","Canva","software","mensal","#00c4cc",["CANVA"]],
@@ -2726,19 +2771,33 @@ var CATALOG=[
   ["googleplay","Google Play (assinatura)","software","mensal","#01875f",["GOOGLE PLAY","GOOGLE STORE"]],
   ["discord","Discord Nitro","jogos","mensal","#5865f2",["DISCORD"]],
   ["gamepass","Xbox Game Pass","jogos","mensal","#107c10",["XBOX","GAME PASS","GAMEPASS"]],
-  ["psplus","PlayStation Plus","jogos","mensal","#003791",["PLAYSTATION","PSN","SONY INTERACTIVE"]],
+  ["psplus","PlayStation Plus","jogos","mensal","#003791",["PLAYSTATION PLUS","PS PLUS","PSPLUS","PLAYSTATION","PSN","SONY INTERACTIVE"]],
   ["nintendo","Nintendo Switch Online","jogos","anual","#e60012",["NINTENDO"]],
   ["eaplay","EA Play","jogos","mensal","#ff4747",["EA PLAY","ELECTRONIC ARTS"]],
   ["ubisoft","Ubisoft+","jogos","mensal","#0070ff",["UBISOFT"]],
+  ["robloxprem","Roblox Premium","jogos","mensal","#393b3d",["ROBLOX PREMIUM","RBLX PREMIUM"]],
+  ["fortnitecrew","Fortnite Crew","jogos","mensal","#6a32a8",["FORTNITE CREW"]],
+  ["geforcenow","GeForce NOW","jogos","mensal","#76b900",["GEFORCE NOW","GEFORCENOW","NVIDIA"]],
+  ["applearcade","Apple Arcade","jogos","mensal","#ff2d55",["APPLE ARCADE"]],
+  ["playpass","Google Play Pass","jogos","mensal","#01875f",["PLAY PASS","PLAYPASS"]],
+  ["realms","Minecraft Realms","jogos","mensal","#62b47a",["MINECRAFT REALMS","REALMS"]],
+  ["humble","Humble Choice","jogos","mensal","#cc2929",["HUMBLE BUNDLE","HUMBLE"]],
+  ["wow","World of Warcraft","jogos","mensal","#148eff",["WORLD OF WARCRAFT"]],
+  ["twitch","Twitch","jogos","mensal","#9146ff",["TWITCH"]],
   ["smartfit","Smart Fit","saude","mensal","#ffb800",["SMARTFIT","SMART FIT"]],
   ["bluefit","Bluefit","saude","mensal","#0057b8",["BLUEFIT"]],
   ["wellhub","Wellhub (Gympass)","saude","mensal","#d8385e",["WELLHUB","GYMPASS"]],
   ["totalpass","TotalPass","saude","mensal","#00a650",["TOTALPASS","TOTAL PASS"]],
+  ["strava","Strava","saude","mensal","#fc4c02",["STRAVA"]],
+  ["headspace","Headspace","saude","mensal","#f47d31",["HEADSPACE"]],
   ["bodytech","Bodytech","saude","mensal","#e30613",["BODYTECH"]],
   ["duolingo","Duolingo Super","educacao","mensal","#58cc02",["DUOLINGO"]],
   ["alura","Alura","educacao","mensal","#051933",["ALURA"]],
   ["coursera","Coursera Plus","educacao","mensal","#0056d2",["COURSERA"]],
   ["kindle","Kindle Unlimited","educacao","mensal","#ff9900",["KINDLE"]],
+  ["audible","Audible","educacao","mensal","#f8991d",["AUDIBLE"]],
+  ["ubook","Ubook","educacao","mensal","#ff4f00",["UBOOK"]],
+  ["skeelo","Skeelo","educacao","mensal","#6c2bd9",["SKEELO"]],
   ["googleone","Google One","nuvem","mensal","#4285f4",["GOOGLE ONE","GOOGLE STORAGE"]],
   ["icloud","iCloud+","nuvem","mensal","#3693f3",["ICLOUD"]],
   ["dropbox","Dropbox","nuvem","mensal","#0061ff",["DROPBOX"]],
@@ -2755,6 +2814,8 @@ var CATALOG=[
   ["rappi","Rappi Prime","outros","mensal","#ff441f",["RAPPI PRIME","RAPPI"]],
   ["meli","Meli+ (Mercado Livre)","outros","mensal","#ffe600",["MELI","MERCADO LIVRE ASSINATURA"]],
   ["tinder","Tinder","outros","mensal","#fd297b",["TINDER"]],
+  ["patreon","Patreon","outros","mensal","#ff424d",["PATREON"]],
+  ["sky","Sky","streaming","mensal","#e10000",["SKY SERVICOS","SKY BRASIL"]],
   ["bumble","Bumble","outros","mensal","#ffc629",["BUMBLE"]]
 ];
 var CAT_BY_ID={}; CATALOG.forEach(function(c){ CAT_BY_ID[c[0]]=c; });
@@ -2768,7 +2829,12 @@ var SVC_DOMAIN={netflix:"netflix.com",disney:"disneyplus.com",prime:"primevideo.
   totalpass:"totalpass.com",bodytech:"bodytech.com.br",duolingo:"duolingo.com",alura:"alura.com.br",coursera:"coursera.org",kindle:"amazon.com.br",
   googleone:"one.google.com",icloud:"icloud.com",dropbox:"dropbox.com",claro:"claro.com.br",vivo:"vivo.com.br",tim:"tim.com.br",oi:"oi.com.br",
   folha:"folha.uol.com.br",estadao:"estadao.com.br",oglobo:"oglobo.globo.com",medium:"medium.com",ifood:"ifood.com.br",uberone:"uber.com",
-  rappi:"rappi.com.br",meli:"mercadolivre.com.br",tinder:"tinder.com",bumble:"bumble.com"};
+  rappi:"rappi.com.br",meli:"mercadolivre.com.br",tinder:"tinder.com",bumble:"bumble.com",
+  robloxprem:"roblox.com",fortnitecrew:"fortnite.com",geforcenow:"nvidia.com",applearcade:"apple.com",playpass:"play.google.com",realms:"minecraft.net",
+  humble:"humblebundle.com",wow:"worldofwarcraft.blizzard.com",twitch:"twitch.tv",gemini:"gemini.google.com",perplexity:"perplexity.ai",
+  midjourney:"midjourney.com",copilot:"github.com",cursor:"cursor.com",grammarly:"grammarly.com",figma:"figma.com",capcut:"capcut.com",
+  nordvpn:"nordvpn.com",expressvpn:"expressvpn.com",proton:"proton.me",appleone:"apple.com",audible:"audible.com.br",ubook:"ubook.com",
+  skeelo:"skeelo.app",strava:"strava.com",headspace:"headspace.com",patreon:"patreon.com",sky:"sky.com.br"};
 function svcIconUrl(id){ var d=SVC_DOMAIN[id]; return d?"https://www.google.com/s2/favicons?domain="+d+"&sz=128":null; }
 /* apelidos mais longos primeiro (YouTube Music antes de YouTube) */
 var ALIASES=[]; CATALOG.forEach(function(c){ c[5].forEach(function(a){ var cp=a.replace(/ /g,""); ALIASES.push({a:" "+a+" ",cp:cp.length>=6?cp:null,id:c[0],len:a.length}); }); });
@@ -2861,16 +2927,27 @@ function onlyExpenses(list){
 }
 
 /* --- notificações de banco --- */
+/* trecho que não é nome de loja: datas, horas, "hoje", só números */
+function okMerch(s){
+  s=String(s||"").replace(/R\$.*$/,"").replace(/\s+-\s*$/,"").replace(/^(a|o|na|no)\s+/i,"").trim();
+  if(!s||!/[A-Za-zÀ-ú]{2}/.test(s)) return "";
+  if(/^(\d{1,2}[\/.\-]\d{1,2}|\d{1,2}h|\d{1,2}:\d{2}|hoje|ontem|seu |sua |seu$|sua$|r\$|valor|reais)/i.test(s)) return "";
+  if(/^\d/.test(s)&&!/[A-Za-zÀ-ú]{3}/.test(s)) return "";
+  return s;
+}
 function parsePurchaseText(t){
   if(/recebid|recebeu|estorn|devolu|reembols|cashback|dep[oó]sito/i.test(t)) return null;
   var m=t.match(/R\$\s?-?\s?([\d.]+,\d{2}|\d+(?:\.\d{2})?)/); if(!m) return null;
   var v=parseMoney(m[1]); if(!(v>0)) return null;
-  var merch="", r;
-  if((r=t.match(/\bem\s+(.{2,45}?)(?:\s+(?:foi|para|no cart|na data|às|as \d|dia \d|com o cart|com cart)|[.;!\n]|$)/i))) merch=r[1];
-  else if((r=t.match(/(?:estabelecimento|loja|local)[:\s]+(.{2,40}?)(?:[.;,\n]|$)/i))) merch=r[1];
-  else if((r=t.match(/\b(?:de|para)\s+([A-Z][A-Z0-9 .*&-]{2,40})/))) merch=r[1];
-  merch=merch.replace(/R\$.*$/,"").replace(/\s+-\s*$/,"").trim();
-  return {v:v,desc:merch||t};
+  var merch="", r, re;
+  re=/\bem\s+(.{2,45}?)(?:\s+(?:foi|para|no cart|na data|às|as \d|dia \d|com o cart|com cart)|[.;!\n]|$)/gi;
+  while(!merch&&(r=re.exec(t))) merch=okMerch(r[1]);
+  if(!merch&&(r=t.match(/(?:estabelecimento|loja|local)[:\s]+(.{2,40}?)(?:[.;,\n]|$)/i))) merch=okMerch(r[1]);
+  if(!merch){ re=/\b(?:de|para)\s+([A-Z][A-Z0-9 .*&-]{2,40})/g; while(!merch&&(r=re.exec(t))) merch=okMerch(r[1]); }
+  if(merch) return {v:v,desc:merch};
+  /* sem nome de loja na notificação: um nome genérico (nunca a data ou o texto inteiro) */
+  var g=/pix/i.test(t)?"Pix enviado":/boleto/i.test(t)?"Boleto pago":/transfer/i.test(t)?"Transferência":/pagamento/i.test(t)?"Pagamento":"Compra no cartão";
+  return {v:v,desc:g,gen:true};
 }
 
 /* --- encontrar assinaturas --- */
@@ -2926,9 +3003,23 @@ function subAvatar(o,cls){
   return '<div class="'+cls+'" style="background:'+col+';color:'+(isLightColor(col)?"#222":"#fff")+'">'+ini+img+'</div>';
 }
 function svcAvatar(id,name,cat){ return subAvatar({svc:id,name:name,cat:cat}); }
-function openCatalog(){ $("catQ").value=""; renderCatalog(); openSheet("catSheet"); }
+var catMode="sub";
+function openCatalog(){ catMode="sub"; $("catQ").value=""; renderCatalog(); openSheet("catSheet"); }
 function renderCatalog(){
   var q=normTxt($("catQ").value).trim(), html="";
+  $("catTitle").textContent=catMode==="buy"?"Escolher loja ou app":"Escolher serviço";
+  $("catQ").placeholder=catMode==="buy"?"Buscar (ex.: Steam, iFood, Shopee)":"Buscar (ex.: Netflix, academia, celular)";
+  if(catMode==="buy"){
+    [PCAT_BY_ID.jogos].concat(PCATS.filter(function(c){ return c.id!=="jogos"; })).forEach(function(cat){
+      var items=PLACES.filter(function(c){ return c[2]===cat.id&&(!q||normTxt(c[1]+" "+cat.n).indexOf(q)>=0||c[4].some(function(a){ return normTxt(a).indexOf(q)>=0; })); });
+      if(!items.length) return;
+      html+='<div class="cat-group">'+esc(cat.n)+'</div>'+items.map(function(c){
+        return '<button type="button" class="cat-item" data-place="'+c[0]+'">'+buyAvatar({name:c[1],desc:c[1],cat:c[2]})+'<b>'+esc(c[1])+'</b></button>';
+      }).join("");
+    });
+    $("catList").innerHTML=html||'<div class="empty">Nada com esse nome. Feche e digite o nome à mão.</div>';
+    return;
+  }
   CATS.forEach(function(cat){
     var items=CATALOG.filter(function(c){ return c[2]===cat.id&&(!q||normTxt(c[1]+" "+cat.n).indexOf(q)>=0||c[5].some(function(a){ return normTxt(a).indexOf(q)>=0; })); });
     if(!items.length) return;
@@ -2943,6 +3034,9 @@ $("catClose").onclick=function(){ closeSheet("catSheet"); };
 $("catSheet").addEventListener("click",function(e){ if(e.target===this) closeSheet("catSheet"); });
 $("pickSvc").onclick=openCatalog;
 $("catList").addEventListener("click",function(e){
+  var pb=e.target.closest("[data-place]");
+  if(pb){ var pl=PLACE_BY_ID[pb.dataset.place]; $("bDesc").value=pl[1]; $("bCat").value=pl[2]; renderBuyAvatar(); closeSheet("catSheet");
+    if(!editingBuy) setTimeout(function(){ $("bVal").focus(); },250); return; }
   var b=e.target.closest("[data-svc]"); if(!b) return; var c=CAT_BY_ID[b.dataset.svc];
   $("fName").value=c[1]; $("fCat").value=c[2]; $("fCycle").value=c[3]; setFormSvc(c[0]);
   closeSheet("catSheet"); setTimeout(function(){ $("fPrice").focus(); },250);
@@ -2956,7 +3050,7 @@ function markSugDone(key){ var s=detStore(); s.ignored=s.ignored||[]; if(s.ignor
 function stmtEvents(){ return (lsGet(STMTKEY,[])||[]).map(function(x){ return {d:parseDate(x.d),v:x.v,desc:x.t,src:"extrato"}; }).filter(function(e){ return e.d; }); }
 function notifEvents(){
   var raw=[]; try{ if(BR&&BR.getPurchases) raw=JSON.parse(BR.getPurchases()||"[]"); }catch(e){}
-  var out=[]; raw.forEach(function(n){ var p=parsePurchaseText(n.text||""); if(!p) return; var d=new Date(n.at); d.setHours(0,0,0,0);
+  var out=[]; raw.forEach(function(n){ var p=parsePurchaseText(n.text||""); if(!p||p.gen) return; var d=new Date(n.at); d.setHours(0,0,0,0);
     out.push({d:d,v:p.v,desc:p.desc,raw:n.text,src:"notificação",app:n.app}); });
   return out;
 }
@@ -3102,7 +3196,8 @@ var PCATS=[
   {id:"saude",n:"Saúde e farmácia",c:"#e64980",k:["DROGA","DROGARIA","FARMA","FARMACIA","RAIA","PANVEL","PACHECO","PAGUE MENOS","NISSEI","HOSPITAL","CLINICA","LABORAT","LABORATORIO","ODONTO","DENTIST","UNIMED","HAPVIDA","AMIL","MEDIC","OTICA","FLEURY","DASA","PSICOLOG","FISIOTER"]},
   {id:"compras",n:"Compras",c:"#7048e8",k:["AMAZON","MERCADO LIVRE","MERCADOLIVRE","SHOPEE","SHEIN","ALIEXPRESS","TEMU","MAGALU","MAGAZINE LUIZA","AMERICANAS","CASAS BAHIA","PONTO FRIO","RENNER","RIACHUELO","CEA","ZARA","HERING","CENTAURO","NETSHOES","DECATHLON","KABUM","LEROY","TOK STOK","ETNA","CAMICADO","SHOPPING","LOJA","LOJAS","FAST SHOP","MARISA","PERNAMBUCANAS","ELETRO"]},
   {id:"contas",n:"Contas e casa",c:"#495057",k:["ENEL","LIGHT SA","LIGHT S A","CEMIG","COPEL","CELESC","COELBA","NEOENERGIA","EQUATORIAL","SABESP","CEDAE","COPASA","SANEPAR","COMGAS","NATURGY","CONDOMIN","CONDOMINIO","ALUGUEL","IPTU","IPVA","DETRAN","BOLETO","ENERGIA","AGUA","INTERNET","SEGURO","PORTO SEGURO","FINANCIAMENTO","EMPRESTIMO","FATURA","TARIFA","ANUIDADE","IOF","JUROS"]},
-  {id:"lazer",n:"Lazer e viagem",c:"#f59f00",k:["CINEMA","CINEMARK","KINOPLEX","UCI","INGRESSO","INGRESSOS","SYMPLA","EVENTIM","TICKETMASTER","STEAM","NUUVEM","EPIC GAMES","SHOW","TEATRO","PARQUE","MUSEU","BOLICHE","HOTEL","AIRBNB","BOOKING","DECOLAR","VIAGEM","HOSTEL","POUSADA","RESORT","CLUBE"]},
+  {id:"jogos",n:"Jogos",c:"#ae3ec9",k:["STEAM","STEAMPOWERED","VALVE","NUUVEM","EPIC GAMES","EPICGAMES","ROBLOX","RBLX","PLAYSTATION","PSN","SONY INTERACTIVE","XBOX","NINTENDO","GARENA","FREE FIRE","RIOT GAMES","RIOT","VALORANT","LEAGUE OF LEGENDS","BLIZZARD","BATTLE NET","BATTLENET","ACTIVISION","ELECTRONIC ARTS","UBISOFT","GOG COM","HOYOVERSE","MIHOYO","COGNOSPHERE","GENSHIN","SUPERCELL","CODASHOP","KINGUIN","ENEBA","G2A","ROCKSTAR","MOJANG","MINECRAFT","FORTNITE","GAMERSCLUB","LEVELUP","RAZER GOLD","INSTANT GAMING","GAMIVO","GAMES","GAMER","GAMESTOP"]},
+  {id:"lazer",n:"Lazer e viagem",c:"#f59f00",k:["CINEMA","CINEMARK","KINOPLEX","UCI","INGRESSO","INGRESSOS","SYMPLA","EVENTIM","TICKETMASTER","SHOW","TEATRO","PARQUE","MUSEU","BOLICHE","HOTEL","AIRBNB","BOOKING","DECOLAR","VIAGEM","HOSTEL","POUSADA","RESORT","CLUBE"]},
   {id:"educacao",n:"Educação",c:"#0c8599",k:["ESCOLA","COLEGIO","FACULDADE","UNIVERS","UNIVERSIDADE","CURSO","CURSOS","LIVRARIA","SARAIVA","UDEMY","PAPELARIA","KALUNGA","MATRICULA","MENSALIDADE ESCOLAR"]},
   {id:"pets",n:"Pets",c:"#a0522d",k:["PET","PETSHOP","PET SHOP","COBASI","PETZ","PETLOVE","VETERIN","VETERINARIA","AGROPECUARIA","RACAO"]},
   {id:"beleza",n:"Beleza e cuidados",c:"#d6336c",k:["SALAO","BARBEARIA","BARBER","BOTICARIO","OBOTICARIO","NATURA","SEPHORA","ESTETICA","CABELEIREIRO","MANICURE","EUDORA","AVON","PERFUMARIA","COSMETIC"]},
@@ -3114,11 +3209,112 @@ var PCAT_BY_ID={}; PCATS.forEach(function(c){ PCAT_BY_ID[c.id]=c; c.kw=c.k.map(f
 var SUBCAT={id:"__sub",n:"Assinaturas",c:"#e3ad58"};
 function pcat(id){ return id==="__sub"?SUBCAT:(PCAT_BY_ID[id]||PCAT_BY_ID.outros); }
 function autoCat(desc){
-  if(matchService(desc)) return "digital";
+  var bm=bestMatch(desc);
+  if(bm&&bm.t==="svc") return CAT_BY_ID[bm.id][2]==="jogos"?"jogos":"digital";
+  if(bm&&bm.t==="place") return PLACE_BY_ID[bm.id][2];
   var n=normTxt(desc);
   for(var i=0;i<PCATS.length;i++){ var c=PCATS[i]; for(var j=0;j<c.kw.length;j++) if(n.indexOf(c.kw[j])>=0) return c.id; }
   return "outros";
 }
+
+/* Lojas e apps onde mais se gasta sem ser assinatura: [id, nome, categoria, cor, apelidos, site do ícone] */
+var PLACES=[
+  ["steam","Steam","jogos","#1b2838",["STEAM","STEAMPOWERED","VALVE"],"steampowered.com"],
+  ["roblox","Roblox","jogos","#393b3d",["ROBLOX","RBLX","ROBUX"],"roblox.com"],
+  ["psstore","PlayStation Store","jogos","#003791",["PLAYSTATION STORE","PLAYSTATION","PSN","SONY INTERACTIVE"],"playstation.com"],
+  ["xbox","Xbox / Microsoft Store","jogos","#107c10",["XBOX","MICROSOFT STORE","MICROSOFT XBOX"],"xbox.com"],
+  ["eshop","Nintendo eShop","jogos","#e60012",["NINTENDO ESHOP","ESHOP","NINTENDO"],"nintendo.com"],
+  ["epic","Epic Games","jogos","#2a2a2a",["EPIC GAMES","EPICGAMES","FORTNITE"],"epicgames.com"],
+  ["riot","Riot Games","jogos","#d13639",["RIOT GAMES","RIOT","VALORANT","LEAGUE OF LEGENDS"],"riotgames.com"],
+  ["garena","Garena (Free Fire)","jogos","#e2231a",["GARENA","FREE FIRE"],"garena.com"],
+  ["blizzard","Blizzard / Battle.net","jogos","#148eff",["BLIZZARD","BATTLE NET","BATTLENET","ACTIVISION"],"blizzard.com"],
+  ["nuuvem","Nuuvem","jogos","#6c3bd1",["NUUVEM"],"nuuvem.com"],
+  ["hoyoverse","HoYoverse (Genshin)","jogos","#3c8ce7",["HOYOVERSE","MIHOYO","COGNOSPHERE","GENSHIN"],"hoyoverse.com"],
+  ["codashop","Codashop","jogos","#5b2d90",["CODASHOP","CODA SHOP"],"codashop.com"],
+  ["supercell","Supercell","jogos","#222222",["SUPERCELL"],"supercell.com"],
+  ["gplay","Google Play","digital","#01875f",["GOOGLE PLAY","GOOGLE STORE"],"play.google.com"],
+  ["appstore","App Store (Apple)","digital","#555555",["APPLE COM BILL","APPLE COM","ITUNES"],"apple.com"],
+  ["ifood","iFood","comida","#ea1d2c",["IFOOD","IFD"],"ifood.com.br"],
+  ["rappi","Rappi","comida","#ff441f",["RAPPI"],"rappi.com.br"],
+  ["ze","Zé Delivery","comida","#ffcc00",["ZE DELIVERY","ZEDELIVERY"],"ze.delivery"],
+  ["aiqfome","aiqfome","comida","#7b2cbf",["AIQFOME"],"aiqfome.com"],
+  ["mcdonalds","McDonald's","comida","#da291c",["MCDONALD","MC DONALD","MCDONALDS","ARCOS DOURADOS"],"mcdonalds.com.br"],
+  ["bk","Burger King","comida","#d62300",["BURGER KING","BK BRASIL"],"burgerking.com.br"],
+  ["subway","Subway","comida","#008c15",["SUBWAY"],"subway.com"],
+  ["starbucks","Starbucks","comida","#00704a",["STARBUCKS"],"starbucks.com.br"],
+  ["outback","Outback","comida","#7a1b1b",["OUTBACK"],"outback.com.br"],
+  ["kfc","KFC","comida","#a3080c",["KFC"],"kfc.com.br"],
+  ["habibs","Habib's","comida","#c8102e",["HABIB"],"habibs.com.br"],
+  ["cacaushow","Cacau Show","comida","#4b2a1a",["CACAU SHOW"],"cacaushow.com.br"],
+  ["uber","Uber","transporte","#111111",["UBER","UBR"],"uber.com"],
+  ["99","99","transporte","#ffdd00",["99APP","99POP","99 TAXI","99TAXI","99 TECNOLOGIA","99 FOOD"],"99app.com"],
+  ["indrive","inDrive","transporte","#c1f11d",["INDRIVE","INDRIVER"],"indrive.com"],
+  ["shell","Posto Shell","transporte","#fbce07",["SHELL","RAIZEN"],"shell.com.br"],
+  ["ipiranga","Posto Ipiranga","transporte","#ffd200",["IPIRANGA"],"ipiranga.com.br"],
+  ["petrobras","Posto Petrobras","transporte","#008542",["PETROBRAS","BR MANIA","VIBRA"],"petrobras.com.br"],
+  ["semparar","Sem Parar","transporte","#e30613",["SEM PARAR"],"semparar.com.br"],
+  ["latam","LATAM","transporte","#1b0088",["LATAM"],"latamairlines.com"],
+  ["gol","GOL","transporte","#ff5a00",["GOL LINHAS","VOEGOL"],"voegol.com.br"],
+  ["azul","Azul","transporte","#00478f",["AZUL LINHAS","VOEAZUL"],"voeazul.com.br"],
+  ["meli","Mercado Livre","compras","#ffe600",["MERCADO LIVRE","MERCADOLIVRE","MLIVRE"],"mercadolivre.com.br"],
+  ["amazon","Amazon","compras","#ff9900",["AMAZON","AMZN"],"amazon.com.br"],
+  ["shopee","Shopee","compras","#ee4d2d",["SHOPEE"],"shopee.com.br"],
+  ["shein","Shein","compras","#111111",["SHEIN"],"shein.com"],
+  ["aliexpress","AliExpress","compras","#e62e04",["ALIEXPRESS","ALIPAY"],"aliexpress.com"],
+  ["temu","Temu","compras","#fb7701",["TEMU"],"temu.com"],
+  ["magalu","Magalu","compras","#0086ff",["MAGALU","MAGAZINE LUIZA"],"magazineluiza.com.br"],
+  ["americanas","Americanas","compras","#e60014",["AMERICANAS"],"americanas.com.br"],
+  ["casasbahia","Casas Bahia","compras","#0033a0",["CASAS BAHIA"],"casasbahia.com.br"],
+  ["kabum","KaBuM!","compras","#ff6500",["KABUM"],"kabum.com.br"],
+  ["netshoes","Netshoes","compras","#5c2d91",["NETSHOES"],"netshoes.com.br"],
+  ["centauro","Centauro","compras","#e30613",["CENTAURO"],"centauro.com.br"],
+  ["renner","Renner","compras","#d4001a",["RENNER"],"lojasrenner.com.br"],
+  ["riachuelo","Riachuelo","compras","#111111",["RIACHUELO"],"riachuelo.com.br"],
+  ["zara","Zara","compras","#111111",["ZARA"],"zara.com"],
+  ["decathlon","Decathlon","compras","#0082c3",["DECATHLON"],"decathlon.com.br"],
+  ["leroy","Leroy Merlin","compras","#78be20",["LEROY MERLIN","LEROY"],"leroymerlin.com.br"],
+  ["carrefour","Carrefour","mercado","#004e9f",["CARREFOUR"],"carrefour.com.br"],
+  ["assai","Assaí Atacadista","mercado","#e30613",["ASSAI"],"assai.com.br"],
+  ["atacadao","Atacadão","mercado","#ff6c00",["ATACADAO"],"atacadao.com.br"],
+  ["paodeacucar","Pão de Açúcar","mercado","#3a913f",["PAO DE ACUCAR"],"paodeacucar.com"],
+  ["drogasil","Drogasil","saude","#e30613",["DROGASIL"],"drogasil.com.br"],
+  ["raia","Droga Raia","saude","#00843d",["DROGA RAIA","RAIA"],"drogaraia.com.br"],
+  ["pacheco","Drogarias Pacheco","saude","#004b8d",["PACHECO"],"drogariaspacheco.com.br"],
+  ["panvel","Panvel","saude","#003d7d",["PANVEL"],"panvel.com"],
+  ["paguemenos","Pague Menos","saude","#e30613",["PAGUE MENOS"],"paguemenos.com.br"],
+  ["cinemark","Cinemark","lazer","#c8102e",["CINEMARK"],"cinemark.com.br"],
+  ["ingresso","Ingresso.com","lazer","#e6007e",["INGRESSO COM","INGRESSOCOM"],"ingresso.com"],
+  ["sympla","Sympla","lazer","#0097ff",["SYMPLA"],"sympla.com.br"],
+  ["airbnb","Airbnb","lazer","#ff5a5f",["AIRBNB"],"airbnb.com.br"],
+  ["booking","Booking.com","lazer","#003580",["BOOKING"],"booking.com"],
+  ["decolar","Decolar","lazer","#5f259f",["DECOLAR"],"decolar.com"],
+  ["petz","Petz","pets","#00a0e3",["PETZ"],"petz.com.br"],
+  ["cobasi","Cobasi","pets","#0063a5",["COBASI"],"cobasi.com.br"],
+  ["boticario","O Boticário","beleza","#006a4d",["BOTICARIO"],"boticario.com.br"],
+  ["natura","Natura","beleza","#f47a20",["NATURA"],"natura.com.br"],
+  ["sephora","Sephora","beleza","#111111",["SEPHORA"],"sephora.com.br"]
+];
+var PLACE_BY_ID={}, PALIASES=[];
+PLACES.forEach(function(c){ PLACE_BY_ID[c[0]]=c;
+  c[4].concat([normTxt(c[1]).trim()]).forEach(function(a){ var cp=a.replace(/ /g,""); PALIASES.push({a:" "+a+" ",cp:cp.length>=6?cp:null,id:c[0],len:a.length}); }); });
+PALIASES.sort(function(x,y){ return y.len-x.len; });
+function scanAliases(list,text){
+  var n=normTxt(text), cp=n.replace(/ /g,"");
+  for(var i=0;i<list.length;i++){ var A=list[i]; if(n.indexOf(A.a)>=0||(A.cp&&cp.indexOf(A.cp)>=0)) return A; }
+  return null;
+}
+function matchPlace(text){ var A=scanAliases(PALIASES,text); return A?A.id:null; }
+/* serviço de assinatura ou loja: vence o apelido mais específico (empate fica com a loja) */
+function bestMatch(text){
+  if(!text) return null;
+  var s=scanAliases(ALIASES,text), pl=scanAliases(PALIASES,text);
+  if(pl&&/^ (TRANSFERENCIA|PIX)/.test(normTxt(text))) pl=null;
+  if(s&&(!pl||s.len>pl.len)) return {t:"svc",id:s.id};
+  if(pl) return {t:"place",id:pl.id};
+  return null;
+}
+function favUrl(domain){ return domain?"https://www.google.com/s2/favicons?domain="+domain+"&sz=128":null; }
+function normKey(s){ return normTxt(s).trim(); }
 /* nomes limpos para lojas e apps conhecidos */
 var BRANDS=[["IFOOD","iFood"],["UBER","Uber"],["99APP","99"],["99POP","99"],["99 TAXI","99"],["RAPPI","Rappi"],["ZE DELIVERY","Zé Delivery"],
   ["SHOPEE","Shopee"],["SHEIN","Shein"],["ALIEXPRESS","AliExpress"],["TEMU","Temu"],["AMAZON","Amazon"],["MERCADO LIVRE","Mercado Livre"],["MERCADOLIVRE","Mercado Livre"],
@@ -3129,16 +3325,22 @@ var BRANDS=[["IFOOD","iFood"],["UBER","Uber"],["99APP","99"],["99POP","99"],["99
   ["SHELL","Posto Shell"],["IPIRANGA","Posto Ipiranga"],["PETROBRAS","Posto Petrobras"],["SEM PARAR","Sem Parar"],["STEAM","Steam"],["CINEMARK","Cinemark"],["PETZ","Petz"],["COBASI","Cobasi"]];
 BRANDS.forEach(function(b){ b.push(" "+b[0]); });
 function displayName(desc){
-  var svc=matchService(desc); if(svc) return CAT_BY_ID[svc][1];
+  var bm=bestMatch(desc); if(bm) return bm.t==="svc"?CAT_BY_ID[bm.id][1]:PLACE_BY_ID[bm.id][1];
   var n=normTxt(desc); for(var i=0;i<BRANDS.length;i++) if(n.indexOf(BRANDS[i][2])>=0&&!/^ (TRANSFERENCIA|PIX)/.test(n)) return BRANDS[i][1];
   var k=merchantKey(desc); return k?prettyName(k):String(desc||"Compra").slice(0,40);
 }
-function buyStore(){ var b=lsGet(BUYKEY,null)||{}; b.manual=b.manual||[]; b.cat=b.cat||{}; b.del=b.del||[]; b.name=b.name||{}; b.ign=b.ign||[]; return b; }
+function buyStore(){ var b=lsGet(BUYKEY,null)||{}; b.manual=b.manual||[]; b.cat=b.cat||{}; b.del=b.del||[]; b.name=b.name||{}; b.ign=b.ign||[]; b.alias=b.alias||{}; b.photo=b.photo||{}; return b; }
+/* "é o mesmo lugar": nome -> nome principal (segue até 4 passos, sem dar volta) */
+function aliasOf(bs,name){
+  var k=normKey(name), seen={}, n=0, out=null;
+  while(bs.alias[k]&&!seen[k]&&n<4){ seen[k]=1; out=bs.alias[k]; k=normKey(out); n++; }
+  return out&&normKey(out)!==normKey(name)?out:null;
+}
 /* Lançamentos que NÃO são gasto novo: pagar a fatura do cartão (as compras já vêm do extrato do cartão),
    guardar/investir dinheiro (Caixinha, RDB, CDB, poupança…), resgates, estornos e reembolsos. */
 var NOT_SPEND=[
   {k:[" PAGAMENTO DE FATURA"," PAGAMENTO FATURA"," PAGTO FATURA"," PGTO FATURA"," PAG FATURA"," FATURA DO CARTAO"," FATURA CARTAO",
-      " PAGAMENTO CARTAO DE CREDITO"," PAGAMENTO DO CARTAO"," PAGAMENTO DE CARTAO"," PAGAMENTO RECEBIDO"," PAGTO CARTAO"," PGTO CARTAO"],n:"Pagamento de fatura do cartão"},
+      " PAGAMENTO CARTAO DE CREDITO"," PAGAMENTO DA FATURA"," PAGAMENTO DA SUA FATURA"," FATURA PAGA"," FATURA FOI PAGA"," PAGAMENTO DO CARTAO DE CREDITO"," PAGAMENTO DO CARTAO"," PAGAMENTO DE CARTAO"," PAGAMENTO RECEBIDO"," PAGTO CARTAO"," PGTO CARTAO"],n:"Pagamento de fatura do cartão"},
   {k:[" APLICACAO"," APLIC "," RDB "," CDB "," LCI "," LCA "," CAIXINHA"," COFRINHO"," PORQUINHO"," INVESTIMENTO"," POUPANCA",
       " TESOURO DIRETO"," DINHEIRO GUARDADO"," GUARDADO NA"," GUARDAR DINHEIRO"," RESERVA DE EMERGENCIA"],n:"Caixinha, poupança e investimentos"},
   {k:[" RESGATE"," ESTORNO"," REEMBOLSO"," CASHBACK"," DEVOLUCAO"," CANCELAMENTO DE COMPRA"],n:"Resgates, estornos e reembolsos"}
@@ -3150,10 +3352,17 @@ function notSpendReason(desc){
   return null;
 }
 function isNotSpending(desc){ return !!notSpendReason(desc); }
+/* o texto inteiro da notificação também é conferido (ex.: "pagamento da fatura de R$ 746,88 realizado em 12/11") */
+function rawNotSpending(t){
+  var n=normTxt(t);
+  for(var i=0;i<NOT_SPEND.length;i++) for(var j=0;j<NOT_SPEND[i].k.length;j++) if(n.indexOf(NOT_SPEND[i].k[j])>=0) return true;
+  return false;
+}
 function saveBuyStore(b){ _buysSig=""; lsSet(BUYKEY,b); }
 function notifRaw(){ var raw=[]; try{ if(BR&&BR.getPurchases) raw=JSON.parse(BR.getPurchases()||"[]"); }catch(e){} return raw; }
 function subForText(t){
   if(!t) return null; var svc=matchService(t), n=normTxt(t);
+  for(var a=0;a<subs.length;a++){ var sa=subs[a]; if(sa.aka&&sa.aka.some(function(x){ var an=normKey(x); return an.length>=3&&n.indexOf(" "+an+" ")>=0; })) return sa; }
   for(var i=0;i<subs.length;i++){
     var s=subs[i], ss=s.svc||matchService(s.name);
     if(svc){ if(ss===svc) return s; continue; }
@@ -3166,7 +3375,7 @@ var _buysCache=null, _buysSig="";
 function allBuys(){
   var st=lsGet(STMTKEY,[])||[], bs=buyStore(), nr=notifRaw();
   var sig=[st.length,st.length?st[0].d+st[st.length-1].d:"",nr.length,nr.length?nr[nr.length-1].at:0,JSON.stringify(bs).length,
-    subs.map(function(s){ return s.id+":"+s.name+":"+(s.svc||""); }).join("|")].join("#");
+    subs.map(function(s){ return s.id+":"+s.name+":"+(s.svc||"")+":"+(s.aka||[]).join(","); }).join("|")].join("#");
   if(sig===_buysSig&&_buysCache) return _buysCache;
   var del={}, out=[], byVal={};
   bs.del.forEach(function(id){ del[id]=1; });
@@ -3175,15 +3384,17 @@ function allBuys(){
     var p=parsePurchaseText(n.text||""); if(!p) return;
     var iso=fmtISO(new Date(n.at)), v=Math.round(p.v*100)/100;
     var dup=(byVal[v]||[]).some(function(sd){ return Math.abs((parseDate(sd)-parseDate(iso))/86400000)<=3; });
-    if(!dup) out.push({id:"n|"+n.at,d:iso,v:v,desc:p.desc,src:"notificação",app:n.app});
+    if(!dup) out.push({id:"n|"+n.at,d:iso,v:v,desc:p.desc,src:"notificação",app:n.app,raw:n.text||"",gen:p.gen?p.desc+(n.app?" ("+n.app+")":""):null});
   });
   bs.manual.forEach(function(m){ out.push({id:m.id,d:m.d,v:m.v,desc:m.desc,src:"manual",cat:m.cat}); });
-  out=out.filter(function(b){ return !del[b.id]&&b.v>0&&(b.src==="manual"||!isNotSpending(b.desc)); });
+  out=out.filter(function(b){ return !del[b.id]&&b.v>0&&(b.src==="manual"||(!isNotSpending(b.desc)&&!(b.raw&&rawNotSpending(b.raw)))); });
   out.forEach(function(b){
-    var nm=bs.name[b.id];
-    b.name=nm||(b.src==="manual"?b.desc:displayName(b.desc));
-    b.sub=bs.cat[b.id]&&bs.cat[b.id]!=="__sub"?null:(subForText(b.desc)||(nm?subForText(nm):null));
-    b.cat=bs.cat[b.id]||b.cat||autoCat(b.desc);
+    var nm=bs.name[b.id], base=nm||(b.src==="manual"?b.desc:(b.gen||displayName(b.desc))), tgt=aliasOf(bs,base);
+    b.name=tgt||base; b.joined=tgt?base:null;
+    b.sub=bs.cat[b.id]&&bs.cat[b.id]!=="__sub"?null:(subForText(b.desc)||subForText(base)||(tgt?subForText(tgt):null));
+    var ac=tgt?autoCat(tgt):"outros";
+    b.cat=bs.cat[b.id]||b.cat||(ac!=="outros"?ac:autoCat(b.desc));
+    b.icon=bs.photo[normKey(b.name)];
   });
   out.sort(function(a,b){ return a.d<b.d?1:a.d>b.d?-1:0; });
   _buysSig=sig; _buysCache=out; return out;
@@ -3196,7 +3407,7 @@ function spendEvents(f,t){
   logs.forEach(function(e){
     (bySub[e.sid]=bySub[e.sid]||[]).push(e);   /* removido ou não pago também "segura" a mesma cobrança do extrato */
     if(e.st!=="paid") return;
-    if(e.date>=f&&e.date<=t) out.push({id:"L|"+e.k,d:e.date,v:e.amount,name:e.name,kind:"sub",src:"assinatura",log:e,subRef:subById(e.sid)||{id:e.sid,name:e.name,cat:e.cat}});
+    if(e.date>=f&&e.date<=t) out.push({id:"L|"+e.k,d:e.date,v:e.amount,name:(subById(e.sid)||e).name,kind:"sub",src:"assinatura",log:e,subRef:subById(e.sid)||{id:e.sid,name:e.name,cat:e.cat}});
   });
   allBuys().forEach(function(b){
     if(b.d<f||b.d>t) return;
@@ -3211,10 +3422,17 @@ function spendEvents(f,t){
 }
 function sumV(l){ return l.reduce(function(a,x){ return a+x.v; },0); }
 function buyAvatar(b,cls){
-  var svc=matchService(b.desc||b.name||"");
-  if(svc) return subAvatar({svc:svc,name:b.name},cls);
-  var c=pcat(b.cat), ini=esc(((b.name||"?").trim()[0]||"?").toUpperCase());
-  return '<div class="'+(cls||"avatar")+'" style="background:'+c.c+';color:#fff">'+ini+'</div>';
+  cls=cls||"avatar";
+  var ini=esc(((b.name||"?").trim()[0]||"?").toUpperCase()), c=pcat(b.cat);
+  if(b.icon&&b.icon!=="letter") return '<div class="'+cls+'" style="background:'+c.c+';color:#fff">'+ini+'<img class="cover" src="'+esc(b.icon)+'" alt=""></div>';
+  if(b.icon!=="letter"){
+    var bm=bestMatch(b.name)||bestMatch(b.desc||"");
+    if(bm&&bm.t==="svc") return subAvatar({svc:bm.id,name:b.name},cls);
+    if(bm&&bm.t==="place"){ var pl=PLACE_BY_ID[bm.id], col=pl[3];
+      return '<div class="'+cls+'" style="background:'+col+';color:'+(isLightColor(col)?"#222":"#fff")+'">'+ini+
+        '<img class="fav" src="'+esc(favUrl(pl[5]))+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div>'; }
+  }
+  return '<div class="'+cls+'" style="background:'+c.c+';color:#fff">'+ini+'</div>';
 }
 var EVIDX={};
 function evRow(e,i){
@@ -3269,6 +3487,8 @@ function evActions(ev){
     openActions(title,sub,acts); return;
   }
   var b=ev.buy, a2=[{label:b.src==="manual"?"Editar compra":"Editar nome e categoria",cls:"primary",fn:function(){ openBuy(b); }}];
+  if(ev.kind==="buy") a2.push({label:"É o mesmo lugar ou assinatura de outro: juntar",fn:function(){ openJoin({mode:"buy",b:b}); }});
+  if(b.joined) a2.push({label:"Separar de "+b.name+" (voltar a "+b.joined+")",fn:function(){ unjoinBuy(b); }});
   if(b.src!=="manual") a2.push({label:"Não é um gasto (ignorar sempre)",fn:function(){ ignoreMerchant(b); }});
   if(ev.kind==="buy") a2.push({label:"É uma assinatura: cadastrar",fn:function(){ openForm(null,{key:null,name:b.name,price:b.v,cycle:"mensal",cat:"outros",svc:matchService(b.desc),next:fmtISO(nextFrom(parseDate(b.d),"mensal"))}); }});
   else a2.push({label:"Não é dessa assinatura",fn:function(){ var bs=buyStore(); bs.cat[b.id]=autoCat(b.desc)==="digital"?"digital":autoCat(b.desc); saveBuyStore(bs); renderAll(); toast("Agora conta como compra"); }});
@@ -3298,10 +3518,28 @@ function openBuy(b){
   $("bVal").disabled=$("bDate").disabled=!!auto;
   $("buyInfo").textContent=auto?"Valor e data vêm do "+b.src+": aqui você muda o nome e a categoria.":"";
   $("bDel").hidden=!b; $("bDel").classList.remove("armed"); $("bDel").textContent="Remover"; $("bErr").textContent="";
+  buyIcon=undefined; renderBuyAvatar();
   openSheet("buySheet");
   if(!b) setTimeout(function(){ $("bDesc").focus(); },300);
 }
-$("bDesc").addEventListener("input",function(){ if(!editingBuy){ var c=autoCat(this.value); if(c!=="outros") $("bCat").value=c; } });
+$("bDesc").addEventListener("input",function(){ if(!editingBuy){ var c=autoCat(this.value); if(c!=="outros") $("bCat").value=c; } renderBuyAvatar(); });
+$("bCat").addEventListener("change",renderBuyAvatar);
+var buyIcon;   /* undefined = não mexeu; "auto" = ícone da loja; "letter"; ou a foto */
+function renderBuyAvatar(){
+  var name=$("bDesc").value.trim()||"?", stored=buyStore().photo[normKey(name)];
+  var icon=buyIcon===undefined?stored:(buyIcon==="auto"?undefined:buyIcon);
+  var o={name:name,desc:editingBuy?editingBuy.desc:name,cat:$("bCat").value,icon:icon};
+  $("bAvatar").innerHTML=buyAvatar(o);
+  var bm=icon==="letter"?null:(bestMatch(name)||bestMatch(o.desc));
+  $("bPhotoInfo").textContent=icon&&icon!=="letter"?"Foto da galeria":bm?"Ícone de "+(bm.t==="svc"?CAT_BY_ID[bm.id][1]:PLACE_BY_ID[bm.id][1]):"Letra colorida";
+}
+$("pickPlace").onclick=function(){ catMode="buy"; $("catQ").value=""; renderCatalog(); openSheet("catSheet"); };
+$("bPhotoBtn").onclick=function(){
+  photoMode="buy"; var name=$("bDesc").value.trim(), bm=bestMatch(name)||(editingBuy?bestMatch(editingBuy.desc):null);
+  $("phTitle").textContent="Foto do gasto"; $("phText").textContent="Vale para todos os gastos com o nome \""+(name||"…")+"\".";
+  $("phService").disabled=!bm; $("phService").textContent=bm?"Usar o ícone de "+(bm.t==="svc"?CAT_BY_ID[bm.id][1]:PLACE_BY_ID[bm.id][1]):"Usar o ícone da loja (nome fora da lista)";
+  openSheet("photoSheet");
+};
 $("bCancel").onclick=function(){ closeSheet("buySheet"); };
 $("buySheet").addEventListener("click",function(e){ if(e.target===this) closeSheet("buySheet"); });
 $("bDel").onclick=function(){
@@ -3314,8 +3552,9 @@ $("buyForm").addEventListener("submit",function(e){
   var desc=$("bDesc").value.trim(), v=money($("bVal").value), d=$("bDate").value, cat=$("bCat").value, bs=buyStore();
   var err=function(m){ var el=$("bErr"); el.textContent=m; el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); };
   if(!desc) return err("Digite o que foi comprado.");
+  if(buyIcon!==undefined){ var pk=normKey(desc); if(buyIcon==="auto") delete bs.photo[pk]; else bs.photo[pk]=buyIcon; }
   if(editingBuy&&editingBuy.src!=="manual"){
-    bs.name[editingBuy.id]=desc; bs.cat[editingBuy.id]=cat;
+    if(desc!==editingBuy.name||!editingBuy.joined) bs.name[editingBuy.id]=desc; bs.cat[editingBuy.id]=cat;
   } else {
     if(!(v>0)) return err("Digite um valor válido (ex.: 25,90).");
     if(!parseDate(d)) return err("Escolha a data.");
@@ -3594,6 +3833,83 @@ $("iSims").addEventListener("click",function(e){
     {label:"Apagar",cls:"danger wide",fn:function(){ lsSet(SIMKEY,(lsGet(SIMKEY,[])||[]).filter(function(s){ return s.id!==x.id; })); renderSims(); toast("Simulação apagada"); }}
   ]);
 });
+
+/* ================= JUNTAR (mesma assinatura / mesmo lugar) ================= */
+var joinCtx=null;
+function openJoin(ctx){
+  joinCtx=ctx; $("joinQ").value="";
+  if(ctx.mode==="sub"){ $("joinTitle").textContent="Juntar "+ctx.s.name+" com…"; $("joinSub").textContent="Escolha a assinatura que é a mesma. O histórico passa para ela e o nome \""+ctx.s.name+"\" vira um dos outros nomes dela."; }
+  else { $("joinTitle").textContent="\""+ctx.b.name+"\" é o mesmo que…"; $("joinSub").textContent="Escolha uma assinatura sua ou outro lugar. Todos os gastos com esse nome passam a contar junto."; }
+  renderJoin(); openSheet("joinSheet");
+}
+function renderJoin(){
+  var q=normKey($("joinQ").value), html="", c=joinCtx; if(!c) return;
+  var hit=function(t){ return !q||normKey(t).indexOf(q)>=0; };
+  var sl=subs.filter(function(s){ return (c.mode!=="sub"||s.id!==c.s.id)&&(hit(s.name)||(s.aka||[]).some(hit)); });
+  if(sl.length) html+='<div class="cat-group">Suas assinaturas</div>'+sl.map(function(s){
+    return '<button type="button" class="cat-item" data-jsub="'+esc(s.id)+'">'+subAvatar(s)+'<b>'+esc(s.name)+'<small>'+brl(s.price)+' · '+esc(catById(s.cat).n)+'</small></b></button>'; }).join("");
+  if(c.mode==="buy"){
+    var me=normKey(c.b.joined||c.b.name), cnt={}, total={};
+    allBuys().forEach(function(b){ var k=normKey(b.name); if(k===me||k===normKey(c.b.name)) return; cnt[b.name]=(cnt[b.name]||0)+1; total[b.name]=(total[b.name]||0)+b.v; });
+    var names=Object.keys(cnt).filter(hit).sort(function(a,b){ return cnt[b]-cnt[a]; }).slice(0,q?40:25);
+    if(names.length) html+='<div class="cat-group">Seus gastos</div>'+names.map(function(n){
+      return '<button type="button" class="cat-item" data-jname="'+esc(n)+'">'+buyAvatar({name:n,desc:n,cat:autoCat(n),icon:buyStore().photo[normKey(n)]})+'<b>'+esc(n)+'<small>'+cnt[n]+(cnt[n]===1?" gasto":" gastos")+' · '+brl(total[n])+'</small></b></button>'; }).join("");
+    if(q){
+      var have={}; names.forEach(function(n){ have[normKey(n)]=1; });
+      var pl=PLACES.filter(function(p){ return !have[normKey(p[1])]&&(hit(p[1])||p[4].some(hit)); }).slice(0,20);
+      if(pl.length) html+='<div class="cat-group">Lojas e apps</div>'+pl.map(function(p){
+        return '<button type="button" class="cat-item" data-jname="'+esc(p[1])+'">'+buyAvatar({name:p[1],desc:p[1],cat:p[2]})+'<b>'+esc(p[1])+'</b></button>'; }).join("");
+      var raw=$("joinQ").value.trim();
+      if(!have[q]&&!PLACES.some(function(p){ return normKey(p[1])===q; })) html+='<button type="button" class="cat-item" data-jname="'+esc(raw)+'"><div class="avatar" style="background:var(--chip);color:var(--text)">+</div><b>Usar o nome "'+esc(raw)+'"</b></button>';
+    }
+  }
+  $("joinList").innerHTML=html||'<div class="empty">'+(c.mode==="sub"?"Nenhuma outra assinatura com esse nome.":"Digite o nome do lugar.")+'</div>';
+}
+$("joinQ").addEventListener("input",renderJoin);
+$("joinClose").onclick=function(){ closeSheet("joinSheet"); };
+$("joinSheet").addEventListener("click",function(e){ if(e.target===this) closeSheet("joinSheet"); });
+$("joinList").addEventListener("click",function(e){
+  var c=joinCtx, sb=e.target.closest("[data-jsub]"), nb=e.target.closest("[data-jname]"); if(!c||(!sb&&!nb)) return;
+  closeSheet("joinSheet");
+  if(sb){ var t=subById(sb.dataset.jsub); if(!t) return;
+    if(c.mode==="sub") setTimeout(function(){ confirmMergeSubs(c.s,t); },200); else setTimeout(function(){ linkBuyToSub(c.b,t); },200); }
+  else setTimeout(function(){ joinBuyName(c.b,nb.dataset.jname); },200);
+});
+function joinBuyName(b,name){
+  var base=b.joined||b.name, bk=normKey(base), tk=normKey(name), bs=buyStore(); if(!tk||tk===bk) return;
+  var prev=bs.alias[bk], prevBack=bs.alias[tk];
+  bs.alias[bk]=name; if(bs.alias[tk]&&normKey(bs.alias[tk])===bk) delete bs.alias[tk];
+  saveBuyStore(bs); renderAll();
+  toast('"'+base+'" agora conta como "'+name+'"',"Desfazer",function(){
+    var s=buyStore(); if(prev) s.alias[bk]=prev; else delete s.alias[bk]; if(prevBack) s.alias[tk]=prevBack; saveBuyStore(s); renderAll(); });
+}
+function unjoinBuy(b){
+  var bk=normKey(b.joined), bs=buyStore(), prev=bs.alias[bk]; delete bs.alias[bk]; saveBuyStore(bs); renderAll();
+  toast('"'+b.joined+'" separado de "'+b.name+'"',"Desfazer",function(){ var s=buyStore(); s.alias[bk]=prev; saveBuyStore(s); renderAll(); });
+}
+function linkBuyToSub(b,s){
+  var base=b.joined||b.name, had=(s.aka||[]).slice(), bs=buyStore(), pc=bs.cat[b.id];
+  s.aka=had.filter(function(x){ return normKey(x)!==normKey(base); }).concat([base]);
+  if(pc&&pc!=="__sub"){ delete bs.cat[b.id]; saveBuyStore(bs); }
+  save(); _buysSig=""; runDetection(); renderAll();
+  toast('"'+base+'" agora conta como a assinatura '+s.name,"Desfazer",function(){
+    if(had.length) s.aka=had; else delete s.aka; if(pc){ var x=buyStore(); x.cat[b.id]=pc; saveBuyStore(x); } save(); _buysSig=""; runDetection(); renderAll(); });
+}
+function confirmMergeSubs(src,tgt){
+  openActions("Juntar "+src.name+" com "+tgt.name+"?","Os pagamentos de "+src.name+" passam para "+tgt.name+", e "+src.name+" sai da lista (vira outro nome de "+tgt.name+").",
+    [{label:"Juntar as duas",cls:"primary",fn:function(){ mergeSubs(src,tgt); }}]);
+}
+function mergeSubs(src,tgt){
+  var aka=(tgt.aka||[]).slice();
+  [src.name].concat(src.aka||[]).forEach(function(x){ if(normKey(x)!==normKey(tgt.name)&&!aka.some(function(y){ return normKey(y)===normKey(x); })) aka.push(x); });
+  tgt.aka=aka; if(!tgt.svc&&src.svc) tgt.svc=src.svc; if(!tgt.icon&&src.icon) tgt.icon=src.icon;
+  var n=0; logs.forEach(function(e){ if(e.sid===src.id){ e.sid=tgt.id; e.name=tgt.name; e.cat=tgt.cat; n++; } });
+  subs=subs.filter(function(x){ return x.id!==src.id; });
+  if(editing&&editing.id===src.id) closeForm();
+  saveLogs(); save(); _buysSig=""; syncPayments(); renderAll();
+  toast(src.name+" juntada com "+tgt.name+(n?" ("+n+(n===1?" pagamento":" pagamentos")+" no histórico)":""));
+}
+$("fJoin").onclick=function(){ if(editing) openJoin({mode:"sub",s:editing}); };
 
 initCloud(); load(); syncPayments(); renderAll(); renderAbout(); maybeWelcome(); scheduleReminders(); runDetection(); fillInvForm(invCfg()); renderInvest();
 setTimeout(function(){ checkUpdate(false); },2500);
