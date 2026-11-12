@@ -644,6 +644,9 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
 #actSub{color:var(--muted);font-size:14px;margin:-8px 0 16px}
 .note .textlink.inline{display:inline;padding:0;font-size:12px;margin:0}
 .seg.five.ref button{flex-direction:row;padding:10px 2px;font-size:13px}
+
+.months .ign-mine{display:inline-flex;align-items:center;gap:6px;padding-right:4px}
+.months .ign-mine button{border:0;background:var(--line);color:var(--text);width:20px;height:20px;border-radius:50%;font-weight:800;line-height:1;cursor:pointer;padding:0}
 </style>
 </head>
 <body class="boot">
@@ -2023,7 +2026,8 @@ function mergeData(a,b,aAt,bAt){
   function by(l1,l2,key){ var m={},out=[]; (l2||[]).forEach(function(x){ if(x&&x[key]!=null) m[x[key]]=x; }); (l1||[]).forEach(function(x){ if(x&&x[key]!=null) m[x[key]]=x; }); for(var k in m) out.push(m[k]); return out; }
   var bn=nw.buys||{}, bo=od.buys||{}, mobj=function(a,b){ var o={},k; for(k in (b||{})) o[k]=b[k]; for(k in (a||{})) o[k]=a[k]; return o; };
   var del={}; (bo.del||[]).concat(bn.del||[]).forEach(function(x){ del[x]=1; });
-  var buys={manual:by(bn.manual,bo.manual,"id"),cat:mobj(bn.cat,bo.cat),name:mobj(bn.name,bo.name),del:Object.keys(del)};
+  var ign={}; (bo.ign||[]).concat(bn.ign||[]).forEach(function(x){ ign[x]=1; });
+  var buys={manual:by(bn.manual,bo.manual,"id"),cat:mobj(bn.cat,bo.cat),name:mobj(bn.name,bo.name),del:Object.keys(del),ign:Object.keys(ign)};
   return {v:1,subs:by(nw.subs,od.subs,"id"),logs:by(nw.logs,od.logs,"k"),incomes:by(nw.incomes,od.incomes,"id"),prefs:nw.prefs||od.prefs,buys:buys};
 }
 function adoptRemote(remote,up){
@@ -2471,7 +2475,7 @@ $("lockSeg").addEventListener("click",function(e){
 });
 
 /* ================= ATUALIZAÇÕES (GitHub Releases) ================= */
-var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="2.0", UPD_EVERY=6*3600*1000;
+var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="2.0.1", UPD_EVERY=6*3600*1000;
 var updState="", updManual=false, updBusy=false;
 function appVersion(){ try{ var v=BR&&BR.appVersion?BR.appVersion():""; if(v) return v; }catch(e){} return APP_VERSION_FALLBACK; }
 function verParts(v){ return String(v||"").replace(/^[^0-9]*/,"").split(/[^0-9]+/).filter(function(x){return x!=="";}).map(Number); }
@@ -2651,11 +2655,15 @@ function matchService(text){
   return null;
 }
 /* nome do estabelecimento sem códigos de maquininha / gateway */
-var LEAD=/^ (COMPRA (NO|NA|DE|COM) (DEBITO|CREDITO|CARTAO)( VIRTUAL)?|TRANSFERENCIA ENVIADA( PELO PIX)?|TRANSFERENCIA PIX|PIX ENVIADO( PARA)?|PAGAMENTO (DE BOLETO|EFETUADO|DE CONTA)|DEBITO AUTOMATICO|COMPRA|DEBITO|PIX) /;
+var LEAD=/^ (COMPRA (NO|NA|DE|COM) (DEBITO|CREDITO|CARTAO)( VIRTUAL)?( VIA NUPAY)?|TRANSFERENCIA (ENVIADA|RECEBIDA)( PELO PIX)?|TRANSFERENCIA PIX|PIX (ENVIADO|RECEBIDO)( PARA| DE)?|PAGAMENTO DE BOLETO( EFETUADO)?|PAGAMENTO (EFETUADO|DE CONTA)|DEBITO AUTOMATICO|COMPRA|DEBITO|PIX) /;
+/* extratos de conta (Nubank e outros) vêm como "Tipo - Nome - CPF/CNPJ - Banco": fica só o nome */
+var LEAD_RAW=/^\s*(compra (no|na|de|com) (d[eé]bito|cr[eé]dito|cart[aã]o)|transfer[eê]ncia (enviada|recebida)|pix (enviado|recebido)|pagamento de boleto|pagamento efetuado|d[eé]bito autom[aá]tico)/i;
+var STOPW=/ (PAG|PG|EBN|EBANX|DL|IFD|MP|MERCADOPAGO|PAYPAL|PAYGO|SUMUP|STONE|CIELO|GETNET|PICPAY|ZP|HTM|BR|SP|RJ|MG|SAO PAULO|RIO DE JANEIRO|BRA|BRASIL|COM|WWW|LTDA|ME|EIRELI|SA|S A|PARC|PARCELA|EFETUADO) /g;
 function merchantKey(s){
-  var n=normTxt(s).replace(LEAD," ").replace(LEAD," ")
-    .replace(/ (PAG|PG|EBN|EBANX|DL|IFD|MP|MERCADOPAGO|PAYPAL|PAYGO|SUMUP|STONE|CIELO|GETNET|PICPAY|ZP|HTM|BR|SP|RJ|MG|SAO PAULO|RIO DE JANEIRO|BRA|BRASIL|COM|WWW|LTDA|ME|EIRELI|SA|S A|PARC|PARCELA) /g," ")
-    .replace(/ \d+ /g," ").replace(/ \d+ /g," ").replace(/\s+/g," ").trim();
+  var raw=String(s||"");
+  if(LEAD_RAW.test(raw)){ var parts=raw.split(/\s+-\s+/); if(parts.length>1&&/[A-Za-zÀ-ú]/.test(parts[1])) raw=parts[1]; }
+  var n=normTxt(raw).replace(LEAD," ").replace(LEAD," ").replace(STOPW," ").replace(STOPW," ")
+    .replace(/( \d+)+ /g," ").replace(/\s+/g," ").trim();
   return n.split(" ").filter(function(w){ return w.length>1; }).slice(0,3).join(" ");
 }
 function prettyName(k){ return k.toLowerCase().replace(/\b[a-z]/g,function(c){ return c.toUpperCase(); }); }
@@ -2832,7 +2840,7 @@ function haveSub(c){
 }
 function runDetection(){
   var st=detStore(), ign=st.ignored||[];
-  sugList=findCandidates(stmtEvents().concat(notifEvents())).filter(function(c){ return ign.indexOf(c.key)<0&&!haveSub(c); })
+  sugList=findCandidates(stmtEvents().concat(notifEvents()).filter(function(e){ return !isNotSpending(e.desc)&&!(e.raw&&isNotSpending(e.raw)); })).filter(function(c){ return ign.indexOf(c.key)<0&&!haveSub(c); })
     .sort(function(a,b){ return b.last-a.last; });
   renderSugBanner();
   if($("sugSheet").classList.contains("open")) renderSugList();
@@ -2884,7 +2892,7 @@ function monthLbl(ym){ var p=ym.split("-"); return MESES[+p[1]-1]+"/"+p[0].slice
 $("stmtFile").addEventListener("change",function(){
   var files=Array.prototype.slice.call(this.files||[]); this.value=""; if(!files.length) return;
   toast(files.length>1?"Lendo "+files.length+" arquivos…":"Lendo o extrato…");
-  var cur=lsGet(STMTKEY,[])||[], seen={}, before=stmtMonths().length, read=0, bad=0, lines=0, newMonths={};
+  var cur=lsGet(STMTKEY,[])||[], seen={}, before=stmtMonths().length, read=0, bad=0, lines=0, newMonths={}, skipped={};
   cur.forEach(function(x){ seen[x.d+"|"+x.v+"|"+x.t]=1; });
   var cutoff=fmtISO(new Date(today().getFullYear()-2,today().getMonth(),1));
   (function next(i){
@@ -2895,6 +2903,7 @@ $("stmtFile").addEventListener("change",function(){
       if(!read){ toast("Não consegui ler "+(bad>1?"esses arquivos":"esse arquivo")+". Exporte o extrato em OFX ou CSV no app do banco."); renderDetect(); return; }
       var msg=(read>1?read+" arquivos lidos":"Extrato lido")+(nm.length?" · "+nm.map(monthLbl).join(", "):"")+" · "+
         (found?found+(found===1?" assinatura encontrada":" assinaturas encontradas"):"nenhuma assinatura nova");
+      var sk=Object.keys(skipped); if(sk.length){ var tot=sk.reduce(function(a,k){return a+skipped[k];},0); msg+=" · "+tot+(tot===1?" lançamento ignorado":" lançamentos ignorados")+" ("+sk.map(function(k){return k.toLowerCase();}).join(", ")+")"; }
       if(!found&&months.length<2) msg+=". Envie também os outros meses: cobranças que se repetem aparecem a partir de 2 meses.";
       _buysSig=""; renderAll(); toast(msg); renderDetect();
       if(found){ closeSheet("settings"); setTimeout(openSug,350); }
@@ -2905,6 +2914,7 @@ $("stmtFile").addEventListener("change",function(){
       if(!list.length){ bad++; next(i+1); return; }
       read++; lines+=list.length;
       onlyExpenses(list).forEach(function(e){ var x={d:fmtISO(e.d),v:Math.round(e.v*100)/100,t:String(e.desc).slice(0,80)}, k=x.d+"|"+x.v+"|"+x.t;
+        var why=notSpendReason(x.t); if(why&&!seen[k]) skipped[why]=(skipped[why]||0)+1;
         if(!seen[k]&&x.d>=cutoff){ seen[k]=1; cur.push(x); newMonths[x.d.slice(0,7)]=1; } });
       next(i+1);
     });
@@ -2913,6 +2923,18 @@ $("stmtFile").addEventListener("change",function(){
 
 /* --- configurações da detecção --- */
 function detAccess(){ try{ return !!(BR&&BR.detectAccess&&BR.detectAccess()); }catch(e){ return false; } }
+function ignoredHTML(){
+  var st=lsGet(STMTKEY,[])||[], cnt={};
+  st.forEach(function(x){ var r=notSpendReason(x.t); if(r) cnt[r]=(cnt[r]||0)+1; });
+  var auto=NOT_SPEND.map(function(g){ return '<span>'+esc(g.n)+(cnt[g.n]?" · "+cnt[g.n]:"")+'</span>'; }).join("");
+  var mine=buyStore().ign.map(function(k){ return '<span class="ign-mine">'+esc(prettyName(k))+' <button type="button" data-unign="'+esc(k)+'" aria-label="Voltar a contar">×</button></span>'; }).join("");
+  return '<p style="margin:4px 0 6px;font-size:13px">Não contam como gasto (automático):</p><div class="months">'+auto+'</div>'+
+    (mine?'<p style="margin:4px 0 6px;font-size:13px">Ignorados por você (toque no × para voltar a contar):</p><div class="months">'+mine+'</div>':"");
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-unign]"); if(!b) return; var k=b.dataset.unign, s=buyStore();
+  s.ign=s.ign.filter(function(x){ return x!==k; }); saveBuyStore(s); runDetection(); renderAll(); renderDetect(); toast('"'+prettyName(k)+'" volta a contar como gasto');
+});
 function monthsHTML(){
   var ms=stmtMonths(); if(!ms.length) return '<div class="det-note" style="margin:0 0 10px">Nenhum extrato importado ainda. Dá para escolher vários arquivos de uma vez (um por mês, por exemplo).</div>';
   var out=[], a=ms[0].split("-"), y=+a[0], m=+a[1], last=ms[ms.length-1], guard=0, set={}; ms.forEach(function(x){ set[x]=1; });
@@ -2927,7 +2949,7 @@ function renderDetect(){
     '<div class="det-row"><div><span>Notificações do banco</span><small class="'+(on?"st-on":"")+'">'+(BR?(on?"Ligado: lendo as notificações de compra":"Desligado"):"Disponível no app Android")+'</small></div>'+
       (BR?'<button type="button" class="btn '+(on?"ghost":"primary")+'" id="detPerm">'+(on?"Gerenciar":"Ativar")+'</button>':"")+'</div>'+
     (BR&&!on&&sdk>=33?'<div class="det-help">Se a opção do AbyssSub aparecer bloqueada ("configuração restrita"), abra <button type="button" id="detInfo">as informações do app</button>, toque nos 3 pontinhos ⋮ e em <b>Permitir configurações restritas</b>. Depois volte e toque em Ativar.</div>':"")+
-    monthsHTML()+
+    monthsHTML()+ignoredHTML()+
     '<div class="det-acts"><button type="button" class="btn ghost" id="detImport">Importar extratos do banco (OFX ou CSV)</button>'+
       '<button type="button" class="btn ghost" id="detSee">Ver assinaturas encontradas ('+sugList.length+')</button></div>'+
     '<div class="det-note">Tudo é analisado no próprio celular e nada é enviado.'+(nStmt?" "+nStmt+" lançamentos guardados · ":" ")+'<button type="button" class="textlink" id="detClear" style="display:inline;padding:0;font-size:12px">Limpar dados da detecção</button></div>';
@@ -2982,7 +3004,23 @@ function displayName(desc){
   var n=normTxt(desc); for(var i=0;i<BRANDS.length;i++) if(n.indexOf(BRANDS[i][2])>=0&&!/^ (TRANSFERENCIA|PIX)/.test(n)) return BRANDS[i][1];
   var k=merchantKey(desc); return k?prettyName(k):String(desc||"Compra").slice(0,40);
 }
-function buyStore(){ var b=lsGet(BUYKEY,null)||{}; b.manual=b.manual||[]; b.cat=b.cat||{}; b.del=b.del||[]; b.name=b.name||{}; return b; }
+function buyStore(){ var b=lsGet(BUYKEY,null)||{}; b.manual=b.manual||[]; b.cat=b.cat||{}; b.del=b.del||[]; b.name=b.name||{}; b.ign=b.ign||[]; return b; }
+/* Lançamentos que NÃO são gasto novo: pagar a fatura do cartão (as compras já vêm do extrato do cartão),
+   guardar/investir dinheiro (Caixinha, RDB, CDB, poupança…), resgates, estornos e reembolsos. */
+var NOT_SPEND=[
+  {k:[" PAGAMENTO DE FATURA"," PAGAMENTO FATURA"," PAGTO FATURA"," PGTO FATURA"," PAG FATURA"," FATURA DO CARTAO"," FATURA CARTAO",
+      " PAGAMENTO CARTAO DE CREDITO"," PAGAMENTO DO CARTAO"," PAGAMENTO DE CARTAO"," PAGAMENTO RECEBIDO"," PAGTO CARTAO"," PGTO CARTAO"],n:"Pagamento de fatura do cartão"},
+  {k:[" APLICACAO"," APLIC "," RDB "," CDB "," LCI "," LCA "," CAIXINHA"," COFRINHO"," PORQUINHO"," INVESTIMENTO"," POUPANCA",
+      " TESOURO DIRETO"," DINHEIRO GUARDADO"," GUARDADO NA"," GUARDAR DINHEIRO"," RESERVA DE EMERGENCIA"],n:"Caixinha, poupança e investimentos"},
+  {k:[" RESGATE"," ESTORNO"," REEMBOLSO"," CASHBACK"," DEVOLUCAO"," CANCELAMENTO DE COMPRA"],n:"Resgates, estornos e reembolsos"}
+];
+function notSpendReason(desc){
+  var n=normTxt(desc);
+  for(var i=0;i<NOT_SPEND.length;i++) for(var j=0;j<NOT_SPEND[i].k.length;j++) if(n.indexOf(NOT_SPEND[i].k[j])>=0) return NOT_SPEND[i].n;
+  var ign=buyStore().ign; if(ign.length){ var mk=merchantKey(desc); if(mk&&ign.indexOf(mk)>=0) return "Ignorado por você"; }
+  return null;
+}
+function isNotSpending(desc){ return !!notSpendReason(desc); }
 function saveBuyStore(b){ _buysSig=""; lsSet(BUYKEY,b); }
 function notifRaw(){ var raw=[]; try{ if(BR&&BR.getPurchases) raw=JSON.parse(BR.getPurchases()||"[]"); }catch(e){} return raw; }
 function subForText(t){
@@ -3011,7 +3049,7 @@ function allBuys(){
     if(!dup) out.push({id:"n|"+n.at,d:iso,v:v,desc:p.desc,src:"notificação",app:n.app});
   });
   bs.manual.forEach(function(m){ out.push({id:m.id,d:m.d,v:m.v,desc:m.desc,src:"manual",cat:m.cat}); });
-  out=out.filter(function(b){ return !del[b.id]&&b.v>0; });
+  out=out.filter(function(b){ return !del[b.id]&&b.v>0&&(b.src==="manual"||!isNotSpending(b.desc)); });
   out.forEach(function(b){
     var nm=bs.name[b.id];
     b.name=nm||(b.src==="manual"?b.desc:displayName(b.desc));
@@ -3102,12 +3140,22 @@ function evActions(ev){
     openActions(title,sub,acts); return;
   }
   var b=ev.buy, a2=[{label:b.src==="manual"?"Editar compra":"Editar nome e categoria",cls:"primary",fn:function(){ openBuy(b); }}];
+  if(b.src!=="manual") a2.push({label:"Não é um gasto (ignorar sempre)",fn:function(){ ignoreMerchant(b); }});
   if(ev.kind==="buy") a2.push({label:"É uma assinatura: cadastrar",fn:function(){ openForm(null,{key:null,name:b.name,price:b.v,cycle:"mensal",cat:"outros",svc:matchService(b.desc),next:fmtISO(nextFrom(parseDate(b.d),"mensal"))}); }});
   else a2.push({label:"Não é dessa assinatura",fn:function(){ var bs=buyStore(); bs.cat[b.id]=autoCat(b.desc)==="digital"?"digital":autoCat(b.desc); saveBuyStore(bs); renderAll(); toast("Agora conta como compra"); }});
   a2.push({label:"Remover",cls:"danger wide",fn:function(){ removeBuy(b); }});
   openActions(title,sub+(b.src!=="manual"?" · "+b.src:""),a2);
 }
 document.addEventListener("click",function(e){ var r=e.target.closest("[data-ev]"); if(!r) return; var ev=EVIDX[r.dataset.ev]; if(ev) evActions(ev); });
+
+function ignoreMerchant(b){
+  var mk=merchantKey(b.desc); if(!mk){ removeBuy(b); return; }
+  var before=allBuys().length, bs=buyStore(); if(bs.ign.indexOf(mk)<0) bs.ign.push(mk); saveBuyStore(bs); runDetection(); renderAll();
+  var n=before-allBuys().length;
+  toast('"'+prettyName(mk)+'" ignorado: '+n+(n===1?" lançamento saiu":" lançamentos saíram")+" dos gastos","Desfazer",function(){
+    var s=buyStore(); s.ign=s.ign.filter(function(x){ return x!==mk; }); saveBuyStore(s); runDetection(); renderAll();
+  });
+}
 
 /* --- adicionar / editar compra --- */
 var editingBuy=null, buyDelArmed=false;

@@ -1,5 +1,19 @@
 # Histórico de mudanças do AbyssSub
 
+## v2.0.1
+- Correção: "Pagamento de fatura" no extrato da conta não conta mais como gasto (as compras já vêm do extrato do cartão)
+- Correção: dinheiro guardado na Caixinha do Nubank ("Aplicação RDB") não conta mais como gasto
+- Correção: poupança, CDB, LCI, LCA, Tesouro Direto e outros investimentos também ficam de fora dos gastos
+- Correção: resgates, estornos, reembolsos e cashback não contam como gasto
+- Melhoria: o filtro vale também para extratos já importados, sem precisar importar de novo
+- Melhoria: o filtro vale para as notificações do banco e para as sugestões de assinatura
+- Novo: opção "Não é um gasto (ignorar sempre)" no menu de cada compra (ex.: Pix para a sua própria conta)
+- Novo: Configurações mostra o que não conta como gasto e quantos lançamentos foram ignorados
+- Novo: botão × para voltar a contar algo que você ignorou
+- Melhoria: ao importar, o aviso mostra quantos lançamentos foram ignorados e por quê
+- Melhoria: nomes limpos nos lançamentos da conta ("Transferência enviada pelo Pix - MARIA SOUZA - CPF" vira "Maria Souza")
+- Melhoria: "Pagamento de boleto efetuado - CONDOMÍNIO" vira "Condomínio"
+
 ## v2.0
 - Novo: nova aba Início com todos os seus gastos do mês, não só as assinaturas
 - Mudança: a antiga aba Início agora se chama Assinaturas
