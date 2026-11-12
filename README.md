@@ -45,7 +45,8 @@
 
 **Encontrar assinaturas automaticamente**
 - Catálogo com mais de 50 serviços populares para cadastrar com um toque
-- Importa o extrato do banco (OFX ou CSV) e encontra as assinaturas que você já paga
+- Importa extratos do banco (OFX ou CSV), vários de uma vez ou um mês por vez, e encontra as assinaturas que você já paga
+- Foto em cada assinatura: ícone do serviço, foto da galeria ou letra colorida
 - Lê as notificações de compra dos apps de banco (opcional) e sugere novas assinaturas
 - Tudo é analisado no celular; nada é cadastrado sem você confirmar
 

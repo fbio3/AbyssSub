@@ -609,6 +609,20 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
 .det-acts{display:flex;flex-direction:column;gap:8px}
 .det-acts .btn{width:100%}
 .det-note{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* ---------- v1.9: ícones e fotos ---------- */
+.avatar,.av{position:relative;overflow:hidden}
+.avatar img,.av img{position:absolute;inset:0;width:100%;height:100%}
+.avatar img.cover,.av img.cover{object-fit:cover}
+.avatar img.fav,.av img.fav{object-fit:contain;background:#fff;padding:16%}
+.photo-row{display:flex;align-items:center;gap:14px;margin:-2px 0 14px}
+.photo-row .avatar{width:56px;height:56px;flex:0 0 56px;border-radius:16px;font-size:22px}
+.photo-row b{display:block;font-size:14px}
+.photo-row small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.photo-row .linkbtn{margin:6px 0 0}
+.months{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
+.months span{font-size:12px;font-weight:700;background:var(--chip);border-radius:999px;padding:4px 10px}
+.months span.gap{background:transparent;border:1px dashed var(--line);color:var(--muted)}
 </style>
 </head>
 <body class="boot">
@@ -784,6 +798,7 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
     <h3 id="formTitle">Nova assinatura</h3>
     <button type="button" class="pickbtn" id="pickSvc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2" fill="currentColor"/><circle cx="3.5" cy="12" r="1.2" fill="currentColor"/><circle cx="3.5" cy="18" r="1.2" fill="currentColor"/></svg><span>Escolher da lista de serviços</span></button>
     <div class="svc-chip" id="svcChip" hidden></div>
+    <div class="photo-row"><div id="fAvatar"></div><div><b>Foto</b><small id="fPhotoInfo">Letra colorida</small><button type="button" class="linkbtn" id="fPhotoBtn">Mudar foto</button></div></div>
     <div class="field"><label for="fName">Nome</label><input id="fName" placeholder="Ex.: Netflix" maxlength="40"></div>
     <div class="two">
       <div class="field"><label for="fPrice">Valor (R$)</label><input id="fPrice" inputmode="decimal" placeholder="0,00"></div>
@@ -949,7 +964,21 @@ body.on-hist .fab{transform:scale(.4);opacity:0;pointer-events:none}
     <div class="actions" style="margin-top:12px"><button type="button" class="btn ghost" id="sugClose">Fechar</button></div>
   </div>
 </div>
-<input type="file" id="stmtFile" accept=".ofx,.csv,.txt,text/csv,text/plain,application/x-ofx,application/vnd.ms-excel,*/*" hidden>
+<input type="file" id="stmtFile" multiple accept=".ofx,.csv,.txt,text/csv,text/plain,application/x-ofx,application/vnd.ms-excel,*/*" hidden>
+<input type="file" id="photoFile" accept="image/*" hidden>
+
+<!-- foto da assinatura -->
+<div class="overlay top" id="photoSheet">
+  <div class="sheet choice">
+    <div class="grab"></div>
+    <h3>Foto da assinatura</h3>
+    <p>Escolha como essa assinatura aparece no app.</p>
+    <button type="button" class="btn primary" id="phGallery">Escolher da galeria</button>
+    <button type="button" class="btn ghost" id="phService">Usar o ícone do serviço</button>
+    <button type="button" class="btn ghost" id="phLetter">Usar a letra colorida</button>
+    <button type="button" class="btn ghost" id="phCancel">Cancelar</button>
+  </div>
+</div>
 
 <!-- configurações -->
 <div class="overlay" id="settings">
@@ -1292,7 +1321,7 @@ function renderList(nowMi){
     else if(p&&p.ended) tag='<span class="tag ended">Promoção encerrada</span>';
     var pr=priceAt(s,nowMi);
     return '<div class="item anim-in'+(s.id===newId?" new":"")+'" style="--i:'+i+'" data-id="'+s.id+'">'+
-      '<div class="avatar" style="background:'+c.c+'">'+esc((s.name.trim()[0]||"?").toUpperCase())+'</div>'+
+      subAvatar(s)+
       '<div class="info"><b>'+esc(s.name)+'</b><span>'+esc(c.n)+'</span></div>'+
       '<div class="right"><b>'+brl(pr)+'</b><span>por '+cyc.l+(s.cycle!=="mensal"?" · "+brl(pr*cyc.f)+"/mês":"")+'</span></div>'+
       (tag?'<div class="extra">'+tag+'</div>':'')+'</div>';
@@ -1347,7 +1376,7 @@ function payRow(e,i,mode){
   var promo=e.amount<e.full-0.005?" · promoção":"";
   var acts=mode==="pen"?'<div class="acts"><button class="no" data-no="'+esc(e.k)+'">Não</button><button class="yes" data-yes="'+esc(e.k)+'">Paguei</button></div>':"";
   return '<div class="'+cls+'" style="--i:'+Math.min(i,12)+'"'+(mode?"":' data-k="'+esc(e.k)+'"')+'>'+
-    '<div class="av" style="background:'+c.c+'">'+esc((e.name.trim()[0]||"?").toUpperCase())+'</div>'+
+    subAvatar(subById(e.sid)||{name:e.name,cat:e.cat},"av")+
     '<div class="info"><b>'+esc(e.name)+'</b><span>'+dLabel(d)+' · '+(CYCLES[e.cycle]||CYCLES.mensal).n+promo+'</span></div>'+
     '<div class="amt"><span>'+brl(e.amount)+'</span>'+st+'</div>'+acts+'</div>';
 }
@@ -1645,12 +1674,52 @@ function money(s){ s=String(s||"").trim().replace(/\s|R\$/g,""); if(s.indexOf(",
 function moneyStr(v){ return v.toFixed(2).replace(".",","); }
 function curMonth(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
 function setPromoOpen(on){ $("promoWrap").classList.toggle("show",on); }
-var formSvc=null, formSugKey=null;
+var formSvc=null, formSugKey=null, formIcon=null;
+function renderFormAvatar(){
+  var name=$("fName").value.trim()||"?", svc=formSvc||matchService(name);
+  $("fAvatar").innerHTML=subAvatar({icon:formIcon,svc:svc,name:name,cat:$("fCat").value});
+  $("fPhotoInfo").textContent=formIcon&&formIcon!=="letter"?"Foto da galeria":(formIcon!=="letter"&&svc?"Ícone do serviço":"Letra colorida");
+}
 function setFormSvc(id){
   formSvc=id||null; var c=id?CAT_BY_ID[id]:null, chip=$("svcChip");
   if(c){ chip.hidden=false; chip.innerHTML="Serviço: "+esc(c[1])+' · <button type="button" id="svcClear">trocar</button>'; $("svcClear").onclick=function(){ openCatalog(); }; }
   else chip.hidden=true;
+  if($("fAvatar")) renderFormAvatar();
 }
+var catTouched=false;
+$("fName").addEventListener("input",function(){
+  /* nome de serviço conhecido: já ajusta categoria e tipo de cobrança (se você não mudou à mão) */
+  var svc=matchService(this.value);
+  if(svc&&!editing&&!catTouched){ var c=CAT_BY_ID[svc]; $("fCat").value=c[2]; $("fCycle").value=c[3]; }
+  renderFormAvatar();
+});
+$("fCat").addEventListener("change",function(){ catTouched=true; renderFormAvatar(); });
+$("fPhotoBtn").onclick=function(){
+  var svc=formSvc||matchService($("fName").value);
+  $("phService").disabled=!svc; $("phService").textContent=svc?"Usar o ícone do serviço ("+CAT_BY_ID[svc][1]+")":"Usar o ícone do serviço (nome fora da lista)";
+  openSheet("photoSheet");
+};
+$("phCancel").onclick=function(){ closeSheet("photoSheet"); };
+$("photoSheet").addEventListener("click",function(e){ if(e.target===this) closeSheet("photoSheet"); });
+$("phService").onclick=function(){ formIcon=null; closeSheet("photoSheet"); renderFormAvatar(); };
+$("phLetter").onclick=function(){ formIcon="letter"; closeSheet("photoSheet"); renderFormAvatar(); };
+$("phGallery").onclick=function(){ closeSheet("photoSheet"); $("photoFile").click(); };
+$("photoFile").addEventListener("change",function(){
+  var f=this.files&&this.files[0]; this.value=""; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var S=160, c=document.createElement("canvas"); c.width=c.height=S; var x=c.getContext("2d"), m=Math.min(img.width,img.height);
+      x.fillStyle="#fff"; x.fillRect(0,0,S,S);
+      x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+      formIcon=c.toDataURL("image/jpeg",0.82); renderFormAvatar(); toast("Foto escolhida. Toque em Salvar para guardar");
+    };
+    img.onerror=function(){ toast("Não consegui abrir essa imagem"); };
+    img.src=r.result;
+  };
+  r.readAsDataURL(f);
+});
 function openForm(s,pre){
   editing=s||null; delArmed=false; formSugKey=pre&&pre.key||null;
   $("formTitle").textContent=s?"Editar assinatura":pre?"Confirmar assinatura":"Nova assinatura";
@@ -1664,11 +1733,12 @@ function openForm(s,pre){
   setPromoOpen($("fHasPromo").checked);
   $("delBtn").hidden=!s; $("delBtn").classList.remove("armed"); $("delBtn").textContent="Excluir";
   $("err").textContent=""; $("form").scrollTop=0;
-  setFormSvc(s?s.svc:null); $("pickSvc").hidden=!!s;
+  setFormSvc(s?s.svc:null); $("pickSvc").hidden=!!s; formIcon=s&&s.icon?s.icon:null; catTouched=false;
   if(pre){
     $("fName").value=pre.name; $("fPrice").value=pre.price?moneyStr(pre.price):""; $("fCycle").value=pre.cycle||"mensal";
     $("fCat").value=pre.cat||"outros"; if(pre.next) $("fNext").value=pre.next; setFormSvc(pre.svc); $("pickSvc").hidden=true;
   }
+  renderFormAvatar();
   openSheet("overlay");
 }
 function closeForm(){ closeSheet("overlay"); editing=null; }
@@ -1709,7 +1779,7 @@ $("form").addEventListener("submit",function(e){
     if(parseMonth(ps)===null) return err("Escolha o mês em que a promoção começou.");
     promo={price:pp,months:pm,start:ps};
   }
-  var data={name:name,price:price,cycle:$("fCycle").value,cat:$("fCat").value,next:next,promo:promo,svc:formSvc||(editing&&editing.svc)||matchService(name)||null};
+  var data={name:name,price:price,cycle:$("fCycle").value,cat:$("fCat").value,next:next,promo:promo,svc:formSvc||(editing&&editing.svc)||matchService(name)||null,icon:formIcon||undefined};
   if(formSugKey){ markSugDone(formSugKey); formSugKey=null; }
   var msg=editing?"Alterações salvas":"Assinatura adicionada";
   if(editing){ for(var k in data) editing[k]=data[k]; newId=editing.id; }
@@ -1758,6 +1828,7 @@ $("toastAct").onclick=function(){ var f=toastFn; toastFn=null; $("toast").classL
 window.handleBack=function(){
   if(!$("lock").hidden) return false;
   if(tipFor){ hideTip(); return true; }
+  if($("photoSheet").classList.contains("open")){ closeSheet("photoSheet"); return true; }
   if($("catSheet").classList.contains("open")){ closeSheet("catSheet"); return true; }
   if($("sugSheet").classList.contains("open")){ closeSheet("sugSheet"); return true; }
   if($("pinSheet").classList.contains("open")){ closeSheet("pinSheet"); return true; }
@@ -2265,7 +2336,7 @@ $("lockSeg").addEventListener("click",function(e){
 });
 
 /* ================= ATUALIZAÇÕES (GitHub Releases) ================= */
-var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="1.8", UPD_EVERY=6*3600*1000;
+var REPO="fbio3/AbyssSub", UPKEY="abysssub.update", APP_VERSION_FALLBACK="1.9", UPD_EVERY=6*3600*1000;
 var updState="", updManual=false, updBusy=false;
 function appVersion(){ try{ var v=BR&&BR.appVersion?BR.appVersion():""; if(v) return v; }catch(e){} return APP_VERSION_FALLBACK; }
 function verParts(v){ return String(v||"").replace(/^[^0-9]*/,"").split(/[^0-9]+/).filter(function(x){return x!=="";}).map(Number); }
@@ -2419,6 +2490,18 @@ var CATALOG=[
   ["bumble","Bumble","outros","mensal","#ffc629",["BUMBLE"]]
 ];
 var CAT_BY_ID={}; CATALOG.forEach(function(c){ CAT_BY_ID[c[0]]=c; });
+/* site oficial de cada serviço: o ícone é carregado de lá (não fica copiado dentro do app) */
+var SVC_DOMAIN={netflix:"netflix.com",disney:"disneyplus.com",prime:"primevideo.com",max:"max.com",globoplay:"globoplay.globo.com",
+  paramount:"paramountplus.com",appletv:"tv.apple.com",crunchyroll:"crunchyroll.com",ytpremium:"youtube.com",telecine:"telecine.com.br",
+  mubi:"mubi.com",spotify:"spotify.com",deezer:"deezer.com",ytmusic:"music.youtube.com",applemusic:"music.apple.com",amazonmusic:"music.amazon.com",
+  tidal:"tidal.com",chatgpt:"chatgpt.com",claude:"claude.ai",m365:"microsoft365.com",adobe:"adobe.com",canva:"canva.com",notion:"notion.so",
+  linkedin:"linkedin.com",apple:"apple.com",googleplay:"play.google.com",discord:"discord.com",gamepass:"xbox.com",psplus:"playstation.com",
+  nintendo:"nintendo.com",eaplay:"ea.com",ubisoft:"ubisoft.com",smartfit:"smartfit.com.br",bluefit:"bluefit.com.br",wellhub:"wellhub.com",
+  totalpass:"totalpass.com",bodytech:"bodytech.com.br",duolingo:"duolingo.com",alura:"alura.com.br",coursera:"coursera.org",kindle:"amazon.com.br",
+  googleone:"one.google.com",icloud:"icloud.com",dropbox:"dropbox.com",claro:"claro.com.br",vivo:"vivo.com.br",tim:"tim.com.br",oi:"oi.com.br",
+  folha:"folha.uol.com.br",estadao:"estadao.com.br",oglobo:"oglobo.globo.com",medium:"medium.com",ifood:"ifood.com.br",uberone:"uber.com",
+  rappi:"rappi.com.br",meli:"mercadolivre.com.br",tinder:"tinder.com",bumble:"bumble.com"};
+function svcIconUrl(id){ var d=SVC_DOMAIN[id]; return d?"https://www.google.com/s2/favicons?domain="+d+"&sz=128":null; }
 /* apelidos mais longos primeiro (YouTube Music antes de YouTube) */
 var ALIASES=[]; CATALOG.forEach(function(c){ c[5].forEach(function(a){ var cp=a.replace(/ /g,""); ALIASES.push({a:" "+a+" ",cp:cp.length>=6?cp:null,id:c[0],len:a.length}); }); });
 ALIASES.sort(function(x,y){ return y.len-x.len; });
@@ -2539,7 +2622,8 @@ function findCandidates(events){
     var runs=0, best=null;
     for(var i=1;i<l.length;i++){
       var days=(l[i].d-l[i-1].d)/86400000, dv=Math.abs(l[i].v-l[i-1].v)/Math.max(l[i].v,l[i-1].v);
-      if(days>=26&&days<=35&&dv<=0.15){ runs++; best=l[i]; }
+      var months=Math.round(days/30.4), off=Math.abs(days-months*30.4);
+      if(months>=1&&months<=3&&off<=5+months&&dv<=0.15){ runs++; best=l[i]; }
     }
     if(runs>=1&&best) out.push({key:"m:"+mk,svc:null,name:prettyName(mk),cat:"outros",cycle:"mensal",price:Math.round(best.v*100)/100,last:best.d,seen:l.map(function(e){return e.d;}),src:best.src,app:best.app});
   });
@@ -2555,7 +2639,22 @@ function nextFrom(last,cycle){
 
 /* --- catálogo na tela --- */
 var CATNAMES={}; CATS.forEach(function(c){ CATNAMES[c.id]=c.n; });
-function svcAvatar(id,name,cat){
+function isLightColor(hex){
+  var m=String(hex||"").match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); if(!m) return false;
+  return (0.299*parseInt(m[1],16)+0.587*parseInt(m[2],16)+0.114*parseInt(m[3],16))>170;
+}
+function subById(id){ for(var i=0;i<subs.length;i++) if(subs[i].id===id) return subs[i]; return null; }
+/* foto da assinatura: foto escolhida > ícone do serviço > letra colorida */
+function subAvatar(o,cls){
+  cls=cls||"avatar";
+  var svc=o.svc||(o.name&&typeof matchService==="function"?matchService(o.name):null), sc=svc&&CAT_BY_ID[svc];
+  var col=sc?sc[4]:catById(o.cat).c, ini=esc(((o.name||"?").trim()[0]||"?").toUpperCase());
+  var custom=o.icon&&o.icon!=="letter"?o.icon:null, fav=!custom&&o.icon!=="letter"&&svc?svcIconUrl(svc):null;
+  var img=custom?'<img class="cover" src="'+esc(custom)+'" alt="">':fav?'<img class="fav" src="'+esc(fav)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">':"";
+  return '<div class="'+cls+'" style="background:'+col+';color:'+(isLightColor(col)?"#222":"#fff")+'">'+ini+img+'</div>';
+}
+function svcAvatar(id,name,cat){ return subAvatar({svc:id,name:name,cat:cat}); }
+function svcAvatarOld(id,name,cat){
   var c=id?CAT_BY_ID[id]:null, col=c?c[4]:catById(cat).c, ini=esc(((name||"?").trim()[0]||"?").toUpperCase());
   var light=/^#(f|e|d)[0-9a-f]{1}(f|e|d)/i.test(col);
   return '<div class="avatar" style="background:'+col+';color:'+(light?"#222":"#fff")+'">'+ini+'</div>';
@@ -2647,28 +2746,49 @@ function readFileText(file,cb){
   r.onerror=function(){ cb(""); };
   r.readAsText(file,"utf-8");
 }
+function stmtMonths(){
+  var set={}; (lsGet(STMTKEY,[])||[]).forEach(function(x){ set[x.d.slice(0,7)]=1; });
+  return Object.keys(set).sort();
+}
+function monthLbl(ym){ var p=ym.split("-"); return MESES[+p[1]-1]+"/"+p[0].slice(2); }
 $("stmtFile").addEventListener("change",function(){
-  var f=this.files&&this.files[0]; this.value=""; if(!f) return;
-  toast("Lendo o extrato…");
-  readFileText(f,function(txt){
-    var list=/<STMTTRN>|<OFX>/i.test(txt)?parseOFX(txt):parseCSV(txt);
-    if(!list.length){ toast("Não consegui ler esse arquivo. Exporte o extrato em OFX ou CSV no app do banco."); return; }
-    var exp=onlyExpenses(list), cur=lsGet(STMTKEY,[])||[], seen={};
-    cur.forEach(function(x){ seen[x.d+"|"+x.v+"|"+x.t]=1; });
-    var added=0, cutoff=fmtISO(new Date(today().getFullYear()-2,today().getMonth(),1));
-    exp.forEach(function(e){ var x={d:fmtISO(e.d),v:Math.round(e.v*100)/100,t:String(e.desc).slice(0,80)}; var k=x.d+"|"+x.v+"|"+x.t;
-      if(!seen[k]&&x.d>=cutoff){ seen[k]=1; cur.push(x); added++; } });
-    cur.sort(function(a,b){ return a.d<b.d?-1:1; }); if(cur.length>4000) cur=cur.slice(-4000);
-    try{ localStorage.setItem(STMTKEY,JSON.stringify(cur)); }catch(e){}
-    var found=runDetection().length;
-    toast("Extrato lido: "+list.length+" lançamentos · "+(found?found+(found===1?" assinatura encontrada":" assinaturas encontradas"):"nenhuma assinatura nova"));
-    if(found){ closeSheet("settings"); setTimeout(openSug,350); }
-    renderDetect();
-  });
+  var files=Array.prototype.slice.call(this.files||[]); this.value=""; if(!files.length) return;
+  toast(files.length>1?"Lendo "+files.length+" arquivos…":"Lendo o extrato…");
+  var cur=lsGet(STMTKEY,[])||[], seen={}, before=stmtMonths().length, read=0, bad=0, lines=0, newMonths={};
+  cur.forEach(function(x){ seen[x.d+"|"+x.v+"|"+x.t]=1; });
+  var cutoff=fmtISO(new Date(today().getFullYear()-2,today().getMonth(),1));
+  (function next(i){
+    if(i>=files.length){
+      cur.sort(function(a,b){ return a.d<b.d?-1:1; }); if(cur.length>6000) cur=cur.slice(-6000);
+      try{ localStorage.setItem(STMTKEY,JSON.stringify(cur)); }catch(e){}
+      var months=stmtMonths(), found=runDetection().length, nm=Object.keys(newMonths).sort();
+      if(!read){ toast("Não consegui ler "+(bad>1?"esses arquivos":"esse arquivo")+". Exporte o extrato em OFX ou CSV no app do banco."); renderDetect(); return; }
+      var msg=(read>1?read+" arquivos lidos":"Extrato lido")+(nm.length?" · "+nm.map(monthLbl).join(", "):"")+" · "+
+        (found?found+(found===1?" assinatura encontrada":" assinaturas encontradas"):"nenhuma assinatura nova");
+      if(!found&&months.length<2) msg+=". Envie também os outros meses: cobranças que se repetem aparecem a partir de 2 meses.";
+      toast(msg); renderDetect();
+      if(found){ closeSheet("settings"); setTimeout(openSug,350); }
+      return;
+    }
+    readFileText(files[i],function(txt){
+      var list=/<STMTTRN>|<OFX>/i.test(txt)?parseOFX(txt):parseCSV(txt);
+      if(!list.length){ bad++; next(i+1); return; }
+      read++; lines+=list.length;
+      onlyExpenses(list).forEach(function(e){ var x={d:fmtISO(e.d),v:Math.round(e.v*100)/100,t:String(e.desc).slice(0,80)}, k=x.d+"|"+x.v+"|"+x.t;
+        if(!seen[k]&&x.d>=cutoff){ seen[k]=1; cur.push(x); newMonths[x.d.slice(0,7)]=1; } });
+      next(i+1);
+    });
+  })(0);
 });
 
 /* --- configurações da detecção --- */
 function detAccess(){ try{ return !!(BR&&BR.detectAccess&&BR.detectAccess()); }catch(e){ return false; } }
+function monthsHTML(){
+  var ms=stmtMonths(); if(!ms.length) return '<div class="det-note" style="margin:0 0 10px">Nenhum extrato importado ainda. Dá para escolher vários arquivos de uma vez (um por mês, por exemplo).</div>';
+  var out=[], a=ms[0].split("-"), y=+a[0], m=+a[1], last=ms[ms.length-1], guard=0, set={}; ms.forEach(function(x){ set[x]=1; });
+  while(guard++<36){ var k=y+"-"+String(m).padStart(2,"0"); out.push('<span class="'+(set[k]?"":"gap")+'">'+monthLbl(k)+'</span>'); if(k===last) break; m++; if(m>12){ m=1; y++; } }
+  return '<p style="margin:0 0 6px;font-size:13px">Meses de extrato salvos'+(out.length>ms.length?" (tracejado = faltando)":"")+':</p><div class="months">'+out.join("")+'</div>';
+}
 function renderDetect(){
   var box=$("detBox"); if(!box) return;
   var on=detAccess(), sdk=0; try{ sdk=BR&&BR.sdkInt?BR.sdkInt():0; }catch(e){}
@@ -2677,9 +2797,10 @@ function renderDetect(){
     '<div class="det-row"><div><span>Notificações do banco</span><small class="'+(on?"st-on":"")+'">'+(BR?(on?"Ligado: lendo as notificações de compra":"Desligado"):"Disponível no app Android")+'</small></div>'+
       (BR?'<button type="button" class="btn '+(on?"ghost":"primary")+'" id="detPerm">'+(on?"Gerenciar":"Ativar")+'</button>':"")+'</div>'+
     (BR&&!on&&sdk>=33?'<div class="det-help">Se a opção do AbyssSub aparecer bloqueada ("configuração restrita"), abra <button type="button" id="detInfo">as informações do app</button>, toque nos 3 pontinhos ⋮ e em <b>Permitir configurações restritas</b>. Depois volte e toque em Ativar.</div>':"")+
-    '<div class="det-acts"><button type="button" class="btn ghost" id="detImport">Importar extrato do banco (OFX ou CSV)</button>'+
+    monthsHTML()+
+    '<div class="det-acts"><button type="button" class="btn ghost" id="detImport">Importar extratos do banco (OFX ou CSV)</button>'+
       '<button type="button" class="btn ghost" id="detSee">Ver assinaturas encontradas ('+sugList.length+')</button></div>'+
-    '<div class="det-note">Tudo é analisado no próprio celular e nada é enviado.'+(nStmt?" "+nStmt+" lançamentos de extrato guardados · ":" ")+'<button type="button" class="textlink" id="detClear" style="display:inline;padding:0;font-size:12px">Limpar dados da detecção</button></div>';
+    '<div class="det-note">Tudo é analisado no próprio celular e nada é enviado.'+(nStmt?" "+nStmt+" lançamentos guardados · ":" ")+'<button type="button" class="textlink" id="detClear" style="display:inline;padding:0;font-size:12px">Limpar dados da detecção</button></div>';
   var b;
   if((b=$("detPerm"))) b.onclick=function(){ try{ BR.openDetectSettings(); }catch(e){} toast("Ative o AbyssSub na lista e volte para o app"); };
   if((b=$("detInfo"))) b.onclick=function(){ try{ BR.openAppSettings(); }catch(e){} };

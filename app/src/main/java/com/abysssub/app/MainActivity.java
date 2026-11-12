@@ -117,6 +117,13 @@ public class MainActivity extends FragmentActivity {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
                 Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
+                String[] types = params.getAcceptTypes();
+                if (types != null) {
+                    for (String t : types) {
+                        if (t != null && t.startsWith("image")) { i.setType("image/*"); break; }
+                    }
+                }
+                if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 try {
                     startActivityForResult(i, REQ_FILE);
                     return true;
@@ -678,7 +685,17 @@ public class MainActivity extends FragmentActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQ_FILE && fileCallback != null) {
-            fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
+            Uri[] result = null;
+            if (resultCode == RESULT_OK && data != null) {
+                if (data.getClipData() != null) {                       // vários arquivos de uma vez
+                    int n = data.getClipData().getItemCount();
+                    result = new Uri[n];
+                    for (int k = 0; k < n; k++) result[k] = data.getClipData().getItemAt(k).getUri();
+                } else if (data.getData() != null) {
+                    result = new Uri[]{data.getData()};
+                }
+            }
+            fileCallback.onReceiveValue(result);
             fileCallback = null;
         }
     }

@@ -1,5 +1,18 @@
 # Histórico de mudanças do AbyssSub
 
+## v1.9
+- Novo: importar vários extratos de uma vez (por exemplo, um arquivo para cada mês)
+- Novo: Configurações mostra os meses de extrato já salvos, com os meses faltando em tracejado
+- Melhoria: extratos enviados em dias diferentes ficam guardados e são analisados juntos
+- Melhoria: cobranças repetidas são encontradas mesmo com um mês faltando no meio
+- Melhoria: aviso explicando para enviar os outros meses quando só um foi importado
+- Novo: ícones oficiais dos serviços do catálogo, carregados do site de cada serviço
+- Novo: foto em cada assinatura, que aparece na lista, no histórico e nas sugestões
+- Novo: "Mudar foto" no cadastro com três opções: galeria, ícone do serviço ou letra colorida
+- Novo: foto da galeria recortada e reduzida automaticamente para não pesar no app
+- Melhoria: ao digitar o nome de um serviço conhecido, a categoria e o tipo de cobrança são preenchidos sozinhos
+- Melhoria: sem internet, os ícones voltam para a letra colorida
+
 ## v1.8
 - Novo: catálogo com mais de 50 serviços populares (streaming, música, apps, jogos, academias, celular e mais)
 - Novo: botão "Escolher da lista de serviços" no cadastro preenche nome, categoria e tipo de cobrança
