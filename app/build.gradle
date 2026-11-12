@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
 }
 
+
 // Login com Google / nuvem: só liga se o google-services.json do Firebase estiver na pasta app/.
 // Sem ele o app compila normalmente e funciona no modo "sem conta".
 if (file('google-services.json').exists()) {
@@ -20,8 +21,8 @@ android {
         applicationId 'com.abysssub.app'
         minSdk 24
         targetSdk 34
-        versionCode 13
-        versionName '2.0.1'
+        versionCode 14
+        versionName '2.1'
         manifestPlaceholders = [appLabel: '@string/app_name']
     }
 

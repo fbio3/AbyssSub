@@ -1,5 +1,18 @@
 # Histórico de mudanças do AbyssSub
 
+## v2.1
+- Nova aba Investir (entre Renda e Histórico): simulador de investimentos com valor inicial, aporte mensal e prazo em dias, meses ou anos
+- Investir: rendimento em % do CDI, prefixado, IPCA + taxa ou poupança, com IR pela tabela regressiva e IOF nos primeiros 30 dias
+- Investir: mostra valor final líquido, rendimento bruto e líquido, imposto, taxa equivalente, ganho acima da inflação, quanto rende por mês no fim e em quanto tempo o dinheiro dobra
+- Investir: gráfico da evolução mês a mês e comparação com poupança, 100% do CDI, LCI 90%, Tesouro IPCA+ e dinheiro parado
+- Investir: taxas atuais (Selic 13,75%, CDI 13,65%, IPCA 4,6%) editáveis e simulações salvas, sincronizadas com a conta
+- Renda: navegação por mês, igual ao Início, mostrando quanto sobrou em cada mês
+- Renda: a sobra agora considera todos os gastos por padrão, com opção de ver só assinaturas ou só gastos
+- Renda: o gráfico mostra assinaturas, gastos e sobra separados
+- Início: "Onde você mais gasta" pode alternar entre Tudo, Só gastos e Só assinaturas
+- Correção: as porcentagens da referência de gasto (5%, 10%, 15%...) agora ficam centralizadas
+- Correção: ao trocar para uma aba à direita, a tela não some mais por meio segundo
+
 ## v2.0.1
 - Correção: "Pagamento de fatura" no extrato da conta não conta mais como gasto (as compras já vêm do extrato do cartão)
 - Correção: dinheiro guardado na Caixinha do Nubank ("Aplicação RDB") não conta mais como gasto
