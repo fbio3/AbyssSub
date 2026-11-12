@@ -5,7 +5,11 @@ plugins {
 
 // Os arquivos temporários do build ficam FORA da pasta do projeto (o OneDrive
 // trava essas pastas e o build falha). Local: %LOCALAPPDATA%\AbyssSub-build
-def outBase = new File(System.getenv('LOCALAPPDATA') ?: System.getProperty('java.io.tmpdir'), 'AbyssSub-build')
-allprojects {
-    layout.buildDirectory.set(new File(outBase, project.name))
+// Só no Windows (no GitHub Actions o build fica na pasta padrão app/build).
+def localAppData = System.getenv('LOCALAPPDATA')
+if (localAppData) {
+    def outBase = new File(localAppData, 'AbyssSub-build')
+    allprojects {
+        layout.buildDirectory.set(new File(outBase, project.name))
+    }
 }

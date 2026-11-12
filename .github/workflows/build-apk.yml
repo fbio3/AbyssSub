@@ -3,9 +3,10 @@ name: Gerar APK
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]
   pull_request:
   workflow_dispatch:
+  release:
+    types: [ published ]   # ao publicar uma Release pelo site, o APK é anexado nela
 
 permissions:
   contents: write
@@ -43,16 +44,24 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
+          APK=$(find app/build/outputs/apk/debug -name '*.apk' 2>/dev/null | head -n 1)
+          if [ -z "$APK" ]; then
+            echo "::error::O APK não foi gerado."
+            exit 1
+          fi
+          cp "$APK" AbyssSub.apk
+          ls -l AbyssSub.apk
 
       - name: Guardar APK (aba Actions > Artifacts)
         uses: actions/upload-artifact@v4
         with:
-          name: AbyssSub-apk
-          path: APK/*.apk
+          name: AbyssSub
+          path: AbyssSub.apk
+          if-no-files-found: error
 
-      - name: Publicar na página de Releases (quando for uma tag v*)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Anexar o APK na Release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: APK/*.apk
-          generate_release_notes: true
+          files: AbyssSub.apk
+          fail_on_unmatched_files: true

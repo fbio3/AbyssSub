@@ -62,7 +62,7 @@
 
 ## Baixar
 
-Baixe o `AbyssSub-debug.apk` mais recente na página de **[Releases](../../releases)**, abra no celular e permita
+Baixe o `AbyssSub.apk` mais recente na página de **[Releases](../../releases)**, abra no celular e permita
 "instalar apps desconhecidos" quando o Android pedir. Requer Android 7.0 ou superior.
 
 > Se o segredo `ABYSS_DEBUG_KEYSTORE` não estiver configurado, o APK do GitHub sai com outra assinatura:
@@ -91,11 +91,8 @@ compila do mesmo jeito e funciona só no modo sem conta.
 **GitHub Actions** — todo push na `main` gera o APK automaticamente (aba *Actions > Artifacts*).
 Para o APK do GitHub ter a mesma assinatura do seu PC (necessário para o login), crie o segredo
 `ABYSS_DEBUG_KEYSTORE` com o `chave-github.bat` (detalhes no guia do Firebase).
-Para publicar uma versão na página de Releases:
-```bash
-git tag v1.3
-git push origin v1.3
-```
+Para publicar uma versão: no site, **Releases > Draft a new release**, crie a tag (ex.: `v1.6.1`) e publique.
+O workflow roda sozinho e anexa o `AbyssSub.apk` na Release em alguns minutos.
 
 ## Estrutura
 
