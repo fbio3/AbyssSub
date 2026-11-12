@@ -196,15 +196,6 @@ Para o login funcionar num fork:
 
 </details>
 
-## Publicar uma versão
-
-1. Aumente `versionCode` e `versionName` em `app/build.gradle` e adicione a versão no [CHANGELOG.md](CHANGELOG.md)
-2. Faça o push para a `main`
-3. No site: **Releases > Draft a new release**, crie a tag no formato `v2.3`, `v2.3.1`… e publique
-4. O workflow compila e anexa o `AbyssSub.apk` na Release em alguns minutos
-
-O texto da descrição da Release aparece no aviso de atualização dentro do app.
-
 ## Estrutura do projeto
 
 ```
