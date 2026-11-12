@@ -111,6 +111,10 @@ app/src/main/
 
 A interface pode ser testada direto no navegador do computador abrindo `app/src/main/assets/index.html`.
 
+## Histórico de mudanças
+
+Veja o que mudou em cada versão em **[CHANGELOG.md](CHANGELOG.md)**.
+
 ## Licença
 
 [MIT](LICENSE)

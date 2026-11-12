@@ -2212,7 +2212,7 @@ function fmtSize(b){ if(!b) return ""; return (b/1048576).toFixed(1).replace("."
 function openUpdate(){
   var n=latestIfNewer(); if(!n) return;
   $("updCur").textContent=appVersion(); $("updNew").textContent=prettyTag(n.tag);
-  var notes=String(n.notes||"").replace(/\r/g,"").replace(/^#+\s*/gm,"").replace(/\*\*(.*?)\*\*/g,"$1").trim();
+  var notes=String(n.notes||"").replace(/\r/g,"").replace(/^#+\s*/gm,"").replace(/^\s*[-*]\s+/gm,"• ").replace(/\*\*(.*?)\*\*/g,"$1").trim();
   $("updNotes").textContent=notes.length>1200?notes.slice(0,1200)+"…":notes;
   $("updSize").textContent=n.apk?("Tamanho: "+fmtSize(n.size)):"";
   $("updProg").hidden=true; $("updProg").firstElementChild.style.width="0";
