@@ -1,5 +1,13 @@
 # Histórico de mudanças do AbyssSub
 
+## v2.3
+- Investir: o aporte agora pode ser por dia, por semana ou por mês
+- Investir: nova opção de retirar dinheiro todo dia, semana ou mês, com o imposto cobrado só sobre o rendimento retirado
+- Investir: mostra o total retirado, quanto chegou na mão e se o saldo aguenta as retiradas (ou em quanto tempo o dinheiro acaba)
+- Notificações: escolha de quais apps contam como gasto (ex.: desligar WhatsApp ou Gmail)
+- Notificações: em apps com várias contas, como o Gmail, dá para escolher qual e-mail conta
+- Notificações: nova tela "Escolher uma por uma" para ligar ou desligar cada notificação capturada, com filtro por app
+
 ## v2.2.1
 - Correção: transformar uma compra em assinatura não duplica mais o gasto; a própria compra vira o pagamento da nova assinatura
 - A opção no menu da compra agora se chama "É uma assinatura: transformar em assinatura" e já preenche serviço, categoria e próxima cobrança

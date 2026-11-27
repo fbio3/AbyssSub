@@ -33,6 +33,9 @@ public class PurchaseListener extends NotificationListenerService {
             CharSequence title = ex.getCharSequence(Notification.EXTRA_TITLE);
             CharSequence text = ex.getCharSequence(Notification.EXTRA_TEXT);
             CharSequence big = ex.getCharSequence(Notification.EXTRA_BIG_TEXT);
+            // conta da notificação (ex.: no Gmail é o e-mail que recebeu a mensagem)
+            CharSequence sub = ex.getCharSequence(Notification.EXTRA_SUB_TEXT);
+            if (sub == null || sub.length() == 0) sub = ex.getCharSequence(Notification.EXTRA_SUMMARY_TEXT);
             String body = (title == null ? "" : title + " · ") + (big != null ? big : (text == null ? "" : text));
             if (!looksLikePurchase(body)) return;
             String app = sbn.getPackageName();
@@ -40,7 +43,7 @@ public class PurchaseListener extends NotificationListenerService {
                 Object ai = ex.get("android.appInfo");
                 if (ai instanceof ApplicationInfo) app = String.valueOf(getPackageManager().getApplicationLabel((ApplicationInfo) ai));
             } catch (Exception ignored) { }
-            store(this, app, sbn.getPostTime(), body);
+            store(this, app, sbn.getPackageName(), sub == null ? "" : sub.toString(), sbn.getPostTime(), body);
         } catch (Exception ignored) { }
     }
 
@@ -65,7 +68,7 @@ public class PurchaseListener extends NotificationListenerService {
         }
     }
 
-    static synchronized void store(Context c, String app, long at, String text) {
+    static synchronized void store(Context c, String app, String pkg, String sub, long at, String text) {
         try {
             JSONArray arr = load(c);
             String t = text.length() > 300 ? text.substring(0, 300) : text;
@@ -76,6 +79,8 @@ public class PurchaseListener extends NotificationListenerService {
             JSONObject o = new JSONObject();
             o.put("at", at);
             o.put("app", app);
+            o.put("pkg", pkg);
+            if (sub != null && !sub.isEmpty()) o.put("sub", sub.length() > 80 ? sub.substring(0, 80) : sub);
             o.put("text", t);
             arr.put(o);
             while (arr.length() > MAX) arr.remove(0);
