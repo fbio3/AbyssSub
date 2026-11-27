@@ -6,7 +6,7 @@
 
 <p align="center">
   App Android para controlar <b>todos os seus gastos</b>: assinaturas, compras do dia a dia, quanto sobra da renda
-  e quanto o seu dinheiro pode render investido.
+  e quanto o seu dinheiro pode render investido. (ESTE APP PODE COMETER ERROS. olhe com cuidado suas faturas)
 </p>
 
 <p align="center">
